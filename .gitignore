@@ -1,0 +1,12 @@
+*.swp
+*.pyc
+*~
+__pycache__
+ve
+ve-fab
+node_modules
+docker_env
+npm-debug.log
+yarn-error.log
+dist
+.env
