@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require("webpack");
 const merge = require('webpack-merge');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const WebpackBuildNotifierPlugin = require('webpack-build-notifier');
 const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
@@ -33,6 +34,9 @@ module.exports = merge(common, {
         new MiniCssExtractPlugin({
             filename: "[name].[contenthash].css"
         }),
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.HotModuleReplacementPlugin(),
+        new WebpackBuildNotifierPlugin({
+            title: "0xUX Webpack Build"
+        })
     ]
 });

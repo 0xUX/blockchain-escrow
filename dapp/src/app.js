@@ -15,7 +15,7 @@ class App extends Component {
     };
     
     render() {
-        console.log('hi');
+        console.log(this.state.buttonTxt);
         return (
             <div>
                 <Header className="gray">
