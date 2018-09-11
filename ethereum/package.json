@@ -1,0 +1,17 @@
+{
+  "name": "ethereum",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "scripts": {
+        "test": "mocha"
+    },
+  "dependencies": {
+    "fs-extra": "^7.0.0",
+    "ganache-cli": "^6.1.8",
+    "mocha": "^5.2.0",
+    "soc": "^0.2.0",
+    "truffle-hdwallet-provider": "^0.0.6",
+    "web3": "^1.0.0-beta.36"
+  }
+}

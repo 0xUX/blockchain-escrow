@@ -11,18 +11,17 @@ module.exports = merge(common, {
     mode: 'production',
     module: {
         rules: [
-            {
-                test: /\.css$/,
+            {                
+                test: /\.scss$/,
                 use: [
-                    {
-                        loader: MiniCssExtractPlugin.loader,
-                        options: {
-                            // you can specify a publicPath here
-                            // by default it use publicPath in webpackOptions.output
-                            // publicPath: '../'
-                        }
-                    },
-                    "css-loader"
+                    loader: MiniCssExtractPlugin.loader,
+                    options: {
+                        // you can specify a publicPath here
+                        // by default it use publicPath in webpackOptions.output
+                        // publicPath: '../'
+                    }
+                    "css-loader",
+                    "sass-loader"
                 ]
             }
         ]
