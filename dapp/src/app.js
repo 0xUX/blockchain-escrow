@@ -2,12 +2,16 @@ import React, { Component } from "react";
 import {hot} from "react-hot-loader";
 import { Container, Button } from 'reactstrap';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoffee } from '@fortawesome/free-solid-svg-icons'
+
 class App extends Component {
-    render() {        
+    render() {
+        const coffee = <FontAwesomeIcon icon={faCoffee} />;
         return (
             <Container>
-                <Button color="primary">Hello</Button>
-            </Container>
+                <Button color="primary">Time for {coffee}</Button>                
+        </Container>
         );
     }
 }
