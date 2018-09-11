@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import {hot} from "react-hot-loader";
-import { Button } from 'reactstrap';
+import { Container, Button } from 'reactstrap';
 
 class App extends Component {
     render() {        
         return (
-            <Button color="primary">Hello</Button>
+            <Container>
+                <Button color="primary">Hello</Button>
+            </Container>
         );
     }
 }
