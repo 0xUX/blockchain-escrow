@@ -51,7 +51,7 @@ do
 done
 
 # check if there are changed dependecies
-yarn outdated --cwd ~/dev/0xUX/play/dapp
-yarn outdated --cwd ~/dev/0xUX/play/ethereum
+yarn outdated --cwd ~/dev/0xUX/blockchain-escrow/dapp
+yarn outdated --cwd ~/dev/0xUX/blockchain-escrow/ethereum
 
 exit 0
