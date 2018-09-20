@@ -4,7 +4,7 @@
 
 Prerequisites:
 
-* node 9.3
+* node 10.10
 * yarn
 
 First clone this repository, then:

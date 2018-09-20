@@ -4,7 +4,7 @@ Set-up the compile and deploy functionality:
 
 ```
 cd ethereum
-nvm use 9
+nvm use 10
 yarn
 ```
 
@@ -14,7 +14,7 @@ Every time the contract(s) in the contracts directory change they need to be com
 
 ```
 cd ethereum
-nvm use 9
+nvm use 10
 node compile.js
 ```
 
@@ -26,7 +26,7 @@ Run the tests for the contracts:
 
 ```
 cd ethereum
-nvm use 9
+nvm use 10
 yarn test
 ```
 
@@ -36,7 +36,7 @@ The escrow
 
 ```
 cd ethereum
-nvm use 9
+nvm use 10
 node deploy.js
 ```
 
