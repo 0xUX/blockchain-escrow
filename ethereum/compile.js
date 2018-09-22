@@ -1,27 +1,35 @@
-const path = require('path');
-const solc = require('solc');
-const fs = require('fs-extra');
+// node compile.js
+//
+// compile script that outputs the contract's ABI, byte code etc
+// reads: escrow.sol 
+// writes: ./build/CONTRACT.json and ./build/CONTRACT.abi.json for each contract found
 
+const sourceFile = 'escrow.sol';
+
+const path = require('path');
+const fs = require('fs-extra');
+const solc = require('solc');
+
+// read Solidity contracts
+const sourcePath = path.resolve(__dirname, 'contracts', sourceFile);
+const source = fs.readFileSync(sourcePath, 'utf8');
+
+// remove and recreate ./build/ directory
 const buildPath = path.resolve(__dirname, 'build');
 fs.removeSync(buildPath);
+fs.ensureDirSync(buildPath);
 
-const interfaceOnlyPath = path.resolve(__dirname, '../dapp/src/contracts/abi');
-fs.removeSync(interfaceOnlyPath);
-
-const contractPath = path.resolve(__dirname, 'contracts', 'escrow.sol');
-const source = fs.readFileSync(contractPath, 'utf8');
+// compile with optimizer on (1)
 const output = solc.compile(source, 1).contracts;
 
-fs.ensureDirSync(buildPath);
-fs.ensureDirSync(interfaceOnlyPath);
-
+// write JSON files to build directory
 for (let contract in output) {
     fs.outputJsonSync(
         path.resolve(buildPath, contract.substring(1) + '.json'),
         output[contract]
     );
     fs.outputJsonSync(
-        path.resolve(interfaceOnlyPath, contract.substring(1) + '.json'),
+        path.resolve(buildPath, contract.substring(1) + '.abi.json'),
         output[contract].interface
     );
 }
