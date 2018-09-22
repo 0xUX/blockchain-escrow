@@ -21,7 +21,8 @@ module.exports = merge(common, {
     },
     devServer: {
         contentBase: path.join(__dirname, './dist'),
-        hotOnly: true
+        hotOnly: true,
+        historyApiFallback: true
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
