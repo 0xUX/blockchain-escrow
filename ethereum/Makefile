@@ -5,6 +5,9 @@ test: build/Escrow.json
 #	nvm use 10
 	npm run test
 
+deploy: contracts/escrow.sol
+	node deploy.js
+
 build/Escrow.json: contracts/escrow.sol
 	node compile.js
 
