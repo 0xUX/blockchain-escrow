@@ -7,16 +7,14 @@ const compiledContract = require('./build/Escrow.json');
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const Web3 = require('web3');
 
-const provider = new HDWalletProvider(
-    'control repair master prize hello rapid tackle pony liquid offer title slab',
-    'https://rinkeby.infura.io/v3/adf3f446cec440bd8975fa9214391db3'
-);
+const walletKeys = require('./rinkeby-keys.json');
+const provider = new HDWalletProvider(walletKeys.phrase, walletKeys.api);
 const web3 = new Web3(provider);
 
 const deploy = async () => {
     const contractFee = 5;
     accounts = await web3.eth.getAccounts();
-//     console.log('Interface', compiledContract.interface);    
+//     console.log('Interface', compiledContract.interface);
     console.log('Deploying from', accounts[0]);
 
 //     var contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface));
