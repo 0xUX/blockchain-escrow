@@ -1,22 +1,34 @@
+// node deploy.js
+//
+// deploy script, grabs the compiled contract and deploys it on the Rinkeby network
+
+const compiledContract = require('./build/Escrow.json');
+
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const Web3 = require('web3');
-const compiledEscrow = require('./build/Escrow.json');
 
-const provider = new HDWalletProvider( // @@@ TODO import our own from file outside version control
-    'call glow acoustic vintage front ring trade assist shuffle mimic volume reject',
-    'https://rinkeby.infura.io/orDImgKRzwNrVCDrAk5Q'
+const provider = new HDWalletProvider(
+    'control repair master prize hello rapid tackle pony liquid offer title slab',
+    'https://rinkeby.infura.io/v3/adf3f446cec440bd8975fa9214391db3'
 );
 const web3 = new Web3(provider);
 
 const deploy = async () => {
-    const accounts = await web3.eth.getAccounts();
+    const contractFee = 5;
+    accounts = await web3.eth.getAccounts();
+//     console.log('Interface', compiledContract.interface);    
+    console.log('Deploying from', accounts[0]);
 
-    console.log('Attempting to deploy from account', accounts[0]);
+//     var contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface));
+//     var contractData = contract.new.getData(contractFee, {data: '0x'+compiledContract.bytecode});
+//     var estimate = web3.eth.estimateGas({data: contractData});
+//     console.log(estimate);
 
-    const result = await new web3.eth.Contract(JSON.parse(compiledEscrow.interface))
-                                 .deploy({ data: '0x' + compiledEscrow.bytecode })
-                                 .send({ from: accounts[0] });
-
-    console.log('Contract deployed to', result.options.address);
+    const contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface))
+        .deploy({ data: '0x'+compiledContract.bytecode, arguments: [contractFee] })
+        .send({ from: accounts[0], gas: '2000000', gasPrice: web3.utils.toWei('2', 'gwei') });
+    console.log('Deployed to', contract.options.address);
+    console.log(contract);
 };
+
 deploy();
