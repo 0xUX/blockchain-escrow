@@ -16,6 +16,16 @@ class Balance extends Component {
         const balance = balances[currentUser] || 0;
         const newBalance = balance + Number(this.state.deposit);
         updateBalance(currentUser, newBalance);
+        this.setState({ deposit: '' });
+    }
+
+    handleWithdraw = (e) => {
+        e.preventDefault();
+        const { currentUser, balances, updateBalance } = this.props;
+        const balance = balances[currentUser] || 0;
+        const newBalance = Math.max(0, balance - Number(this.state.withdraw));
+        updateBalance(currentUser, newBalance);
+        this.setState({ withdraw: '' });
     }
 
     handleChange = (e) => {
@@ -26,13 +36,13 @@ class Balance extends Component {
     
     render() {
         const { currentUser, balances } = this.props;
+        if(currentUser == '') return null;
         const balance = balances[currentUser] || 0;
-        console.log(balances);        
         return (
-            <div className="card p-3">
+            <div className="card p-3 mb-1">
                 <p>Current balance: {balance} Ether</p>
                 <Form inline onSubmit={this.handleDeposit}>
-                    <FormGroup>
+                    <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                         <Input name="deposit"
                                placeholder="enter amount in Ether"
                                onChange={this.handleChange}
@@ -42,12 +52,16 @@ class Balance extends Component {
                     <Button type="submit">deposit</Button>
                 </Form>
                 {balance > 0 &&
-                 <Form inline onSubmit={console.log('withdraw')}>
-                     <FormGroup>
-                         <Input name="withdraw" id="withdraw" placeholder="enter amount in Ether" />
+                 <Form className="mt-1" inline onSubmit={this.handleWithdraw}>
+                     <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
+                         <Input name="withdraw"
+                                placeholder="enter amount in Ether"
+                                onChange={this.handleChange}
+                                value={this.state.withdraw}
+                         />
                      </FormGroup>
                      <Button type="submit">withdraw</Button>
-                 </Form>
+                     </Form>
                 }
             </div>
         );
