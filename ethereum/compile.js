@@ -14,13 +14,18 @@ const solc = require('solc');
 const sourcePath = path.resolve(__dirname, 'contracts', sourceFile);
 const source = fs.readFileSync(sourcePath, 'utf8');
 
+// compile with optimizer on (1)
+const output = solc.compile(source, 1).contracts;
+// stop here if compilation failed
+if (Object.keys(output).length == 0) {
+    console.log('Solc: compilation failed.', output);
+    process.exit(1); // and tell the caller (e.g. make)
+}
+
 // remove and recreate ./build/ directory
 const buildPath = path.resolve(__dirname, 'build');
 fs.removeSync(buildPath);
 fs.ensureDirSync(buildPath);
-
-// compile with optimizer on (1)
-const output = solc.compile(source, 1).contracts;
 
 // write JSON files to build directory
 for (let contract in output) {
@@ -33,3 +38,4 @@ for (let contract in output) {
         output[contract].interface
     );
 }
+
