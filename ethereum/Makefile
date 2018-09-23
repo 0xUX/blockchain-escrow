@@ -1,7 +1,7 @@
 hi:
-	echo "make {test,compile,deploy}"
+	echo "make {tests,compile,deploy}"
 
-test: build/Escrow.json
+tests: build/Escrow.json
 #	nvm use 10
 	npm run test
 
