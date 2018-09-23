@@ -1,7 +1,7 @@
 import { SET_CURRENT_USER } from '../actionTypes';
 import { USERS } from "../../constants";
 
-const initialState = USERS.USER1;
+const initialState = '';
 
 const currentUser = (state = initialState, action) => {
     switch (action.type) {

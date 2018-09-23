@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { Link, NavLink as RouterNavLink } from 'react-router-dom';
 import { Container, Collapse, Navbar, NavbarToggler, NavbarBrand, Nav, NavItem, NavLink } from 'reactstrap';
-import SelectCurrentUser from './selectCurrentUser';
+import SelectCurrentUser from './select-current-user';
+import Message from './message';
 
 class Layout extends Component {
     state = {
@@ -32,6 +33,7 @@ class Layout extends Component {
                 </Navbar>
                 <Container>
                     <SelectCurrentUser />
+                    <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />
                     {this.props.children}
                 </Container>
             </div>

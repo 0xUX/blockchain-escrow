@@ -18,16 +18,16 @@ class SelectCurrentUser extends Component {
                              const user = USERS[userKey];
                              return (
                                  <Button color="primary"
-                                         onClick={() => setCurrentUser(user)}
-                                         active={currentUser === user}
-                                         key={user}
+                                         onClick={() => setCurrentUser(userKey)}
+                                         active={currentUser === userKey}
+                                         key={userKey}
                                      >
                                      {user}
                                  </Button>
                              );
                         })}
                     </ButtonGroup>
-                    <p className="mt-3">Current User: {currentUser}</p>
+                    <p className="mt-3">Current User: {USERS[currentUser]}</p>
                 </div>
             </div>
         );

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import Balance from './balance';
+import DomainNameForm from './domain-name-form';
 
 class Home extends Component {
     render() {
@@ -11,6 +12,7 @@ class Home extends Component {
             <div>
                 <h1>Home</h1>
                 <Balance />
+                <DomainNameForm />
               My domains: <Link to="/domain/dmo.com">dmo.com</Link>
             </div>
         );
