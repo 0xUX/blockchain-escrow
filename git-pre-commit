@@ -49,3 +49,6 @@ fi
 exec git diff-index --check --cached $against --
 
 pwd
+cd ..
+pwd
+
