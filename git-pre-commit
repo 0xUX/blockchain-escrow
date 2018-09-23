@@ -48,10 +48,7 @@ fi
 
 if ! (cd  $(git rev-parse --show-toplevel)/ethereum; make compile)
 then
-    echo na
     exit 1
-else
-    echo jo
 fi
 
 # If there are whitespace errors, print the offending file names and fail.
