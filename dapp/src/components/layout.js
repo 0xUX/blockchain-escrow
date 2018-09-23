@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
-import { Link, NavLink as RouterNavLink } from 'react-router-dom';
+import { Link, NavLink as RouterNavLink, withRouter } from 'react-router-dom';
 import { Container, Collapse, Navbar, NavbarToggler, NavbarBrand, Nav, NavItem, NavLink } from 'reactstrap';
 import SelectCurrentUser from './select-current-user';
 import Message from './message';
@@ -21,7 +21,7 @@ class Layout extends Component {
             <div>
                 <Navbar color="light" light expand="md">
                     <NavbarBrand tag={Link} to={'/'}>Domain Escrow</NavbarBrand>                
-                    <NavbarToggler onClick={this.toggleNavBar} />
+                    {/*<NavbarToggler onClick={this.toggleNavBar} />
                     <Collapse isOpen={!this.state.collapsed} navbar>
                         <Nav className="ml-auto" navbar>
                             <NavItem>
@@ -31,7 +31,7 @@ class Layout extends Component {
                                 <NavLink exact to="/agent" tag={RouterNavLink}>Agents</NavLink>
                             </NavItem>
                         </Nav>
-                    </Collapse>
+                    </Collapse>*/}
                 </Navbar>
                 <Container>
                     <SelectCurrentUser />
@@ -51,6 +51,6 @@ const mapStateToProps = state => {
     return { currentUser: state.currentUser };
 };
 
-export default connect(
+export default withRouter(connect(
     mapStateToProps
-)(Layout);
+)(Layout));

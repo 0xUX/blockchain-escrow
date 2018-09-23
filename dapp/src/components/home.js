@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import Balance from './balance';
 import DomainNameForm from './domain-name-form';
+import UserAssets from './user-assets';
 
 class Home extends Component {
     render() {
@@ -13,7 +13,7 @@ class Home extends Component {
                 <h1>Home</h1>
                 <Balance />
                 <DomainNameForm />
-              My domains: <Link to="/domain/dmo.com">dmo.com</Link>
+                <UserAssets />
             </div>
         );
     }

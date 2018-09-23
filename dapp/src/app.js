@@ -15,7 +15,7 @@ class App extends Component {
                     <Switch>
                         <Route exact path="/" component={Home}/>
                         <Route exact path="/agent" component={Agent}/>
-                        <Route path="/agent/:agentId" component={SellViaAgent}/>
+                        <Route path="/agent/:agentKey" component={SellViaAgent}/>
                         <Route path="/domain/:domain" component={Domain}/>
                         <Redirect exact from="/domain" to="/" />
                         <Route component={NoMatch} />

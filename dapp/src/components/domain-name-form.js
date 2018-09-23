@@ -17,9 +17,9 @@ class DomainNameForm extends Component {
         const asset = {
             seller: currentUser,
             price: Number(this.state.price),
-            escrowfee: agent ? Math.round(AGENT_FEES[agent] / 1000 * this.state.price) : null,
-            handlingfee: Math.round(HANDLING_FEE / 1000 * this.state.price),
-            agent: agent,
+            escrowfee: agent ? AGENT_FEES[agent] / 1000 * this.state.price : null,
+            handlingfee: HANDLING_FEE / 1000 * this.state.price,
+            agent: agent || null,
             buyer: null,
             blocknumber: null,
             state: 'FORSALE'
@@ -35,7 +35,7 @@ class DomainNameForm extends Component {
     }
     
     render() {
-        const { currentUser, assets } = this.props;
+        const { currentUser } = this.props;
         if(currentUser == '') return null;
         return (
             <div className="card p-3">
@@ -55,7 +55,7 @@ class DomainNameForm extends Component {
                                value={this.state.price}
                         />
                     </FormGroup>
-                    <Button type="submit">offer</Button>
+                    <Button type="submit">create offer</Button>
                 </Form>
             </div>
         );
@@ -64,13 +64,12 @@ class DomainNameForm extends Component {
 
 DomainNameForm.propTypes = {
     currentUser: PropTypes.string.isRequired,
-    assets: PropTypes.object.isRequired,
     updateAsset: PropTypes.func.isRequired,
     agent: PropTypes.string
 };
 
 const mapStateToProps = state => {
-    return { currentUser: state.currentUser, assets: state.assets };
+    return { currentUser: state.currentUser };
 };
 
 export default connect(

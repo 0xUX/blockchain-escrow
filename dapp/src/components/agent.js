@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { USERS } from "../constants";
 import Balance from './balance';
+import DomainNameForm from './domain-name-form';
 
 export class Agent extends Component {
     render() {
@@ -21,7 +22,7 @@ export class Agent extends Component {
                               const user = USERS[userKey];
                               if(userKey.indexOf('AGENT') === 0) { 
                                   return (
-                                      <li key={user}><Link to={`/agent/${user}`}>{user}</Link></li>
+                                      <li key={user}><Link to={`/agent/${userKey}`}>{user}</Link></li>
                                   );
                               }
                          })}
@@ -40,10 +41,11 @@ Agent.propTypes = {
 export class SellViaAgent extends Component {
     render() {
         const { currentUser, match } = this.props;
-        const { agentId } = match.params;
+        const { agentKey } = match.params;
         return (
             <div>
-                <h1>{agentId}</h1>
+                <h1>{USERS[agentKey]}</h1>
+                <DomainNameForm agent={agentKey} />
             </div>            
         );
     }    
