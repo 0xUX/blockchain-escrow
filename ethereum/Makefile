@@ -1,21 +1,17 @@
 hi:
-	echo "make test | make deploy"
+	echo "make {test,compile,deploy}"
 
 test: build/Escrow.json
 #	nvm use 10
 	npm run test
 
-compile: build/Escrow.json build/Escrow.abi.json
-
-deploy: contracts/escrow.sol
+deploy: build/Escrow.json build/Escrow.abi.json
 	node deploy.js
 
-build/Escrow.json: contracts/escrow.sol
+build/Escrow.json build/Escrow.abi.json: contracts/escrow.sol
 	node compile.js
 
-build/Escrow.abi.json: contracts/escrow.sol
-	node compile.js
-
+compile: build/Escrow.json build/Escrow.abi.json
 
 
 # export NVM_DIR="/Users/stan/.nvm"
