@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
+import { connect } from "react-redux";
 import { Link, NavLink as RouterNavLink } from 'react-router-dom';
 import { Container, Collapse, Navbar, NavbarToggler, NavbarBrand, Nav, NavItem, NavLink } from 'reactstrap';
 import SelectCurrentUser from './select-current-user';
@@ -15,6 +16,7 @@ class Layout extends Component {
     }
     
     render() {
+        const { currentUser } = this.props;
         return (
             <div>
                 <Navbar color="light" light expand="md">
@@ -33,7 +35,7 @@ class Layout extends Component {
                 </Navbar>
                 <Container>
                     <SelectCurrentUser />
-                    <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />
+                    {!currentUser && <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />}
                     {this.props.children}
                 </Container>
             </div>
@@ -42,7 +44,13 @@ class Layout extends Component {
 }
 
 Layout.propTypes = {
-
+    currentUser: PropTypes.string.isRequired
 };
 
-export default Layout;
+const mapStateToProps = state => {
+    return { currentUser: state.currentUser };
+};
+
+export default connect(
+    mapStateToProps
+)(Layout);
