@@ -1,9 +1,11 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
+import { Link } from 'react-router-dom';
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
 import { updateAsset } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE } from '../constants';
+import { userIsAgent } from '../redux/selectors';
 
 class DomainNameForm extends Component {
     state = {
@@ -13,13 +15,13 @@ class DomainNameForm extends Component {
     
     handleSubmit = (e) => {
         e.preventDefault();
-        const { currentUser, assets, updateAsset, agent } = this.props;
+        const { currentUser, assets, updateAsset, agentKey } = this.props;
         const asset = {
             seller: currentUser,
             price: Number(this.state.price),
-            escrowfee: agent ? AGENT_FEES[agent] / 1000 * this.state.price : null,
+            escrowfee: agentKey ? AGENT_FEES[agentKey] / 1000 * this.state.price : null,
             handlingfee: HANDLING_FEE / 1000 * this.state.price,
-            agent: agent || null,
+            agent: agentKey || null,
             buyer: null,
             blocknumber: null,
             state: 'FORSALE'
@@ -35,29 +37,31 @@ class DomainNameForm extends Component {
     }
     
     render() {
-        const { currentUser } = this.props;
-        if(currentUser == '') return null;
+        const { currentUser, agentKey, isAgent } = this.props;
         return (
-            <div className="card p-3">
+            <div className="card p-3 mt-1">
                 <p>Sell domain:</p>
-                <Form inline  onSubmit={this.handleSubmit}>
-                    <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
-                        <Input name="domain"
-                               placeholder="enter domain name"
-                               onChange={this.handleChange}
-                               value={this.state.domain}
-                        />
-                    </FormGroup>
-                    <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
-                        <Input name="price"
-                               placeholder="enter price in Ether"
-                               onChange={this.handleChange}
-                               value={this.state.price}
-                        />
-                    </FormGroup>
-                    <Button type="submit">create offer</Button>
-                </Form>
-            </div>
+                    <Form inline  onSubmit={this.handleSubmit}>
+                        <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
+                            <Input name="domain"
+                                   placeholder="enter domain name"
+                                   onChange={this.handleChange}
+                                   value={this.state.domain}
+                            />
+                        </FormGroup>
+                        <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
+                            <Input name="price"
+                                   placeholder="enter price in Ether"
+                                   onChange={this.handleChange}
+                                   value={this.state.price}
+                            />
+                        </FormGroup>
+                        <Button type="submit">create offer</Button>
+                    </Form>
+                    {!agentKey && !isAgent &&
+                     <div className="mt-3"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
+                    }
+                </div>
         );
     }
 };
@@ -65,11 +69,13 @@ class DomainNameForm extends Component {
 DomainNameForm.propTypes = {
     currentUser: PropTypes.string.isRequired,
     updateAsset: PropTypes.func.isRequired,
-    agent: PropTypes.string
+    isAgent: PropTypes.bool.isRequired,
+    agentKey: PropTypes.string
 };
 
 const mapStateToProps = state => {
-    return { currentUser: state.currentUser };
+    const isAgent = userIsAgent(state);
+    return { currentUser: state.currentUser, isAgent };
 };
 
 export default connect(

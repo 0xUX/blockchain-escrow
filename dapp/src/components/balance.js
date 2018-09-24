@@ -36,10 +36,9 @@ class Balance extends Component {
     
     render() {
         const { currentUser, balances } = this.props;
-        if(currentUser == '') return null;
         const balance = balances[currentUser] || 0;
         return (
-            <div className="card p-3 mb-1">
+            <div className="card p-3 mt-1">
                 <p>Current balance: {balance} Ether</p>
                 <Form inline onSubmit={this.handleDeposit}>
                     <FormGroup className="mb-2 mr-sm-2 mb-sm-0">

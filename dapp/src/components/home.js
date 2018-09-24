@@ -4,13 +4,16 @@ import { connect } from "react-redux";
 import Balance from './balance';
 import DomainNameForm from './domain-name-form';
 import UserAssets from './user-assets';
+import { AgentLink } from './static';
+import { userIsAgent } from '../redux/selectors';
 
 class Home extends Component {
     render() {
-        const { currentUser } = this.props;
+        const { currentUser, isAgent } = this.props;
         return (
             <div>
                 <h1>Home</h1>
+                {isAgent && <AgentLink agentKey={currentUser} />}
                 <Balance />
                 <DomainNameForm />
                 <UserAssets />
@@ -20,11 +23,13 @@ class Home extends Component {
 };
 
 Home.propTypes = {
-    currentUser: PropTypes.string.isRequired
+    currentUser: PropTypes.string.isRequired,
+    isAgent: PropTypes.bool.isRequired
 };
 
 const mapStateToProps = state => {
-    return { currentUser: state.currentUser };
+    const isAgent = userIsAgent(state);
+    return { currentUser: state.currentUser, isAgent };
 };
 
 export default connect(

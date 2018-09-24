@@ -4,11 +4,12 @@ import _ from 'lodash-es';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { getUserAssets } from '../redux/selectors';
+import { ASSET_STATES } from '../constants';
 
 class UserAssets extends Component {
     render() {
         const { currentUser, userAssets } = this.props;
-        if(currentUser == '' || _.isEmpty(userAssets) ) return null;
+        if(_.isEmpty(userAssets)) return null;
         return (
             <div className="card p-3 mt-1">
                 <p>My domains:</p>
@@ -16,7 +17,7 @@ class UserAssets extends Component {
                     {Object.keys(userAssets).map(domain => {
                          const dnprops = userAssets[domain];
                          return (
-                             <li key={domain}>{domain} - {dnprops.price} Ether - <Link to={`/domain/${domain}`}>manage</Link></li>
+                             <li key={domain}>{domain} - {ASSET_STATES[dnprops.state]} - {dnprops.price} Ether - <Link to={`/domain/${domain}`}>manage</Link></li>
                          );
                     })}
                 </ul>

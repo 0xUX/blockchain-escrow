@@ -9,3 +9,15 @@ export const getUserAssets = store => {
     });
     return userAssets;
 };
+
+export const userIsAgent = store => {
+    return userExists(store) && store.currentUser.indexOf('AGENT') === 0;
+};
+
+export const userExists = store => {
+    return !!store.currentUser;
+};
+
+export const userIsOwner = store => {
+    return userExists(store) && store.currentUser === 'OWNER';
+};
