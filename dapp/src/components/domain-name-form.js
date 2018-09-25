@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Link } from 'react-router-dom';
 import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
-import { updateAsset } from '../redux/actions';
+import { addAsset } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE } from '../constants';
 import { userIsAgent } from '../redux/selectors';
 
@@ -15,18 +15,18 @@ class DomainNameForm extends Component {
     
     handleSubmit = (e) => {
         e.preventDefault();
-        const { currentUser, assets, updateAsset, agentKey } = this.props;
+        const { currentUser, assets, addAsset, agentKey } = this.props;
         const asset = {
             seller: currentUser,
             price: Number(this.state.price),
-            escrowfee: agentKey ? AGENT_FEES[agentKey] / 1000 * this.state.price : null,
+            escrowfee: agentKey ? AGENT_FEES[agentKey] / 1000 * this.state.price : 0,
             handlingfee: HANDLING_FEE / 1000 * this.state.price,
             agent: agentKey || null,
             buyer: null,
             blocknumber: null,
             state: 'FORSALE'
         };
-        updateAsset(this.state.domain, asset);
+        addAsset(this.state.domain, asset);
         this.setState({ domain: '', price: '' });
     }
 
@@ -68,7 +68,7 @@ class DomainNameForm extends Component {
 
 DomainNameForm.propTypes = {
     currentUser: PropTypes.string.isRequired,
-    updateAsset: PropTypes.func.isRequired,
+    addAsset: PropTypes.func.isRequired,
     isAgent: PropTypes.bool.isRequired,
     agentKey: PropTypes.string
 };
@@ -80,5 +80,5 @@ const mapStateToProps = state => {
 
 export default connect(
     mapStateToProps,
-    { updateAsset }
+    { addAsset }
 )(DomainNameForm);

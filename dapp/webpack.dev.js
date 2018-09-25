@@ -22,7 +22,9 @@ module.exports = merge(common, {
     devServer: {
         contentBase: path.join(__dirname, './dist'),
         hotOnly: true,
-        historyApiFallback: true
+        historyApiFallback: {
+            disableDotRule: true
+        }
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),

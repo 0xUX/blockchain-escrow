@@ -15,7 +15,8 @@ export const AGENT_FEES = {
 export const ASSET_STATES = {
     FORSALE: 'For sale',
     PAID: 'Paid to escrow',
-    RELEASED: 'Paid to seller'
+    RELEASED: 'Sold',
+    NOTFORSALE: 'Not for sale'
 };
 
 export const HANDLING_FEE = 5; // promilage

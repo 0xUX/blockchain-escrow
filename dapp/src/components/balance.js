@@ -1,8 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
-import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateBalance } from '../redux/actions';
+import { getUserBalance } from '../redux/selectors';
 
 class Balance extends Component {
     state = {
@@ -12,8 +13,7 @@ class Balance extends Component {
     
     handleDeposit = (e) => {
         e.preventDefault();
-        const { currentUser, balances, updateBalance } = this.props;
-        const balance = balances[currentUser] || 0;
+        const { currentUser, balance, updateBalance } = this.props;
         const newBalance = balance + Number(this.state.deposit);
         updateBalance(currentUser, newBalance);
         this.setState({ deposit: '' });
@@ -21,8 +21,7 @@ class Balance extends Component {
 
     handleWithdraw = (e) => {
         e.preventDefault();
-        const { currentUser, balances, updateBalance } = this.props;
-        const balance = balances[currentUser] || 0;
+        const { currentUser, balance, updateBalance } = this.props;
         const newBalance = Math.max(0, balance - Number(this.state.withdraw));
         updateBalance(currentUser, newBalance);
         this.setState({ withdraw: '' });
@@ -35,8 +34,7 @@ class Balance extends Component {
     }
     
     render() {
-        const { currentUser, balances } = this.props;
-        const balance = balances[currentUser] || 0;
+        const { currentUser, balance } = this.props;
         return (
             <div className="card p-3 mt-1">
                 <p>Current balance: {balance} Ether</p>
@@ -69,12 +67,13 @@ class Balance extends Component {
 
 Balance.propTypes = {
     currentUser: PropTypes.string.isRequired,
-    balances: PropTypes.object.isRequired,
+    balance: PropTypes.number.isRequired,
     updateBalance: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => {
-    return { currentUser: state.currentUser, balances: state.balances };
+    const balance = getUserBalance(state);
+    return { currentUser: state.currentUser, balance };
 };
 
 export default connect(
