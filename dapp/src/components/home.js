@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
-import Balance from './balance';
 import DomainNameForm from './domain-name-form';
 import UserAssets from './user-assets';
 import { AgentLink } from './static';
@@ -14,7 +13,6 @@ class Home extends Component {
             <div>
                 <h1>Home</h1>
                 {isAgent && <AgentLink agentKey={currentUser} />}
-                <Balance />
                 <DomainNameForm />
                 <UserAssets />
             </div>

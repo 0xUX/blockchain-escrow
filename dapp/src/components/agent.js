@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Link, Redirect } from 'react-router-dom';
 import { connect } from "react-redux";
 import { USERS } from "../constants";
-import Balance from './balance';
 import UserAssets from './user-assets';
 import DomainNameForm from './domain-name-form';
 import { userIsAgent } from '../redux/selectors';
@@ -14,7 +13,7 @@ export class Agent extends Component {
         return (
             <div>
                 <h1>Agents</h1>
-                {isAgent && <div><UserAssets agentView /><Balance /></div> }
+                {isAgent && <UserAssets agentView /> }
                 {!isAgent &&
                  <div>
                      <p>Intro into agents: why make use of an escrow agent etc.</p>

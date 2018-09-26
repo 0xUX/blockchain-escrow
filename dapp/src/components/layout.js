@@ -2,23 +2,38 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Link, NavLink as RouterNavLink, withRouter } from 'react-router-dom';
-import { Container, Navbar, NavbarBrand } from 'reactstrap';
+import { Container, Button, Navbar, NavbarBrand, NavItem, Nav } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 //import { Collapse, NavbarToggler, Nav, NavItem, NavLink } from 'reactstrap';
 import SelectCurrentUser from './select-current-user';
 import Message from './message';
 import { userExists } from '../redux/selectors';
+import Balance from './balance';
+import { getUserBalance } from '../redux/selectors';
+
+export const BalanceIcon = props => (
+    <Button outline size="sm" onClick={props.onClick}>
+        {props.balance} <FontAwesomeIcon icon={['fab', 'ethereum']} />
+    </Button>
+)
 
 class Layout extends Component {
     state = {
-        collapsed: true
+        showBalance: false
+        //collapsed: true
     }
 
-    toggleNavBar = () => {
-        this.setState({ collapsed: !this.state.collapsed });
+    // toggleNavBar = () => {
+    //     this.setState({ collapsed: !this.state.collapsed });
+    // }
+
+    toggleBalance = () => {
+        this.setState({ showBalance: !this.state.showBalance });
     }
 
     render() {
-        const { isUser } = this.props;
+        const { isUser, balance } = this.props;
+        const { showBalance } = this.state;
         return (
             <div>
                 <Navbar color="light" light expand="md">
@@ -34,10 +49,16 @@ class Layout extends Component {
                         </NavItem>
                         </Nav>
                         </Collapse>*/}
+                    { isUser &&
+                      <Nav className="ml-auto" navbar>
+                          <BalanceIcon balance={balance} onClick={this.toggleBalance} />
+                      </Nav>
+                    }
                 </Navbar>
                 <Container className="pb-5">
                     <SelectCurrentUser />
                     {!isUser && <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />}
+                    {showBalance && <Balance />}
                     {isUser && this.props.children}
                 </Container>
                 <div className="footer text-muted">
@@ -56,7 +77,8 @@ Layout.propTypes = {
 
 const mapStateToProps = state => {
     const isUser = userExists(state);
-    return { isUser };
+    const balance = getUserBalance(state);
+    return { isUser, balance };
 };
 
 export default withRouter(connect(

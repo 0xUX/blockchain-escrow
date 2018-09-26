@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { Button, Form, FormGroup, Input } from 'reactstrap';
-import Balance from './balance';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE } from '../constants';
@@ -40,7 +39,6 @@ class Domain extends Component {
                 {role === 'agent' &&
                  <AgentActions asset={asset} domain={domain} updateAssetState={updateAssetState} removeAsset={removeAsset} updateBalance={updateBalance} />
                 }
-                <Balance />
             </div>
         );
     }
