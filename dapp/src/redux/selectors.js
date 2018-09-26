@@ -10,6 +10,16 @@ export const getUserAssets = store => {
     return userAssets;
 };
 
+export const getAgentAssets = store => {
+    const agentAssets = {};
+    _.forOwn(store.assets, function(value, key) {
+        if (value.agent == store.currentUser) {
+            agentAssets[key] = value;
+        }
+    });
+    return agentAssets;
+};
+
 export const getUserBalance = store => {
     const user = store.currentUser;
     if(!user || !store.balances[user]) return 0;

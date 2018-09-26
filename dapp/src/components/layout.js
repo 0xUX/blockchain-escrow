@@ -16,13 +16,13 @@ class Layout extends Component {
     toggleNavBar = () => {
         this.setState({ collapsed: !this.state.collapsed });
     }
-    
+
     render() {
         const { isUser } = this.props;
         return (
             <div>
                 <Navbar color="light" light expand="md">
-                    <NavbarBrand tag={Link} to={'/'}>Domain Escrow</NavbarBrand>                
+                    <NavbarBrand tag={Link} to={'/'}>Domain Escrow</NavbarBrand>
                     {/*<NavbarToggler onClick={this.toggleNavBar} />
                         <Collapse isOpen={!this.state.collapsed} navbar>
                         <Nav className="ml-auto" navbar>
@@ -35,11 +35,16 @@ class Layout extends Component {
                         </Nav>
                         </Collapse>*/}
                 </Navbar>
-                <Container>
+                <Container className="pb-5">
                     <SelectCurrentUser />
                     {!isUser && <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />}
                     {isUser && this.props.children}
                 </Container>
+                <div className="footer text-muted">
+                    <Container>
+                        <span className="small">{'\u00a9 ' + (new Date()).getFullYear()} <a href="http://0xUX.com" target="_blank">0xUX</a></span>
+                    </Container>
+                </div>
             </div>
         );
     }

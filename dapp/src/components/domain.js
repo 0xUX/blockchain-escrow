@@ -7,10 +7,12 @@ import Balance from './balance';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE } from '../constants';
+import { AssetInfo } from './static';
+import { getSalesPrice, getPriceBreakdown } from '../lib/util';
 
 const NotForSale = props => (
     <div className="card p-3 mt-1">
-      The domain {props.domain} is not for sale. Do you own this domain? <Link to="/">Offer this domain for sale >>></Link>
+        The domain {props.domain} is not for sale. Do you own this domain? <Link to="/">Offer this domain for sale >>></Link>
     </div>
 );
 
@@ -20,11 +22,12 @@ class Domain extends Component {
         const { domain } = match.params;
         const header = <h1>{ASSET_STATES[asset.state]}: <a href={`https://whois.domaintools.com/${domain}`} target="_blank">{domain}</a></h1>;
         if(asset.state === 'NOTFORSALE') return <div>{header}<NotForSale domain={domain} /></div>;
-        const cost = Number(asset.price) + Number(asset.escrowfee) + Number(asset.handlingfee);
+        const cost = getSalesPrice(asset);
         return (
             <div>
                 {header}
-                {cost > 0 && <h3>{cost} Ether</h3>}
+                {cost > 0 && <h2>{cost} Ether</h2>}
+                {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
                 {role === 'seller' &&
                  <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} />
                 }
@@ -33,6 +36,9 @@ class Domain extends Component {
                 }
                 {role === 'buyer' &&
                  <BuyerActions currentUser={currentUser} asset={asset} domain={domain} updateAssetState={updateAssetState} updateBalance={updateBalance} />
+                }
+                {role === 'agent' &&
+                 <AgentActions asset={asset} domain={domain} updateAssetState={updateAssetState} removeAsset={removeAsset} updateBalance={updateBalance} />
                 }
                 <Balance />
             </div>
@@ -113,6 +119,9 @@ class BuyerActions extends Component {
         // pay the seller the net amount, the handling fee stays in the contract
         updateBalance(asset.seller, asset.price);
 
+        // pay the agent
+        if (asset.agent) updateBalance(asset.agent, asset.escrowfee);
+
         // update the state to RELEASED
         updateAssetState(domain, 'RELEASED', currentUser);
     }
@@ -146,6 +155,59 @@ BuyerActions.propTypes = {
     updateAssetState: PropTypes.func.isRequired
 };
 
+class AgentActions extends Component {
+
+    release = () => {
+        const { domain, updateAssetState, updateBalance, asset } = this.props;
+
+        // pay the seller the net amount, the handling fee stays in the contract
+        updateBalance(asset.seller, asset.price);
+
+        // pay the agent (current user)
+        updateBalance(asset.agent, asset.escrowfee);
+
+        // update the state to RELEASED
+        updateAssetState(domain, 'RELEASED', asset.buyer);
+    }
+
+    retractOffer = () => {
+        const { domain, removeAsset } = this.props;
+        removeAsset(domain);
+    }
+
+    render() {
+        const { asset, domain } = this.props;
+        return (
+            <div className="card p-3 mt-1">
+                <p>We are the escrow agent for this offer:</p><AssetInfo domain={domain} asset={asset} />
+                {asset.state === 'PAID' &&
+                 <div>
+                     <p>Buyer has moved funds into escrow for this domain!</p>
+                     <p>When the domain name has been transferred to us, we can release the funds to the seller:</p>
+                     <Button color="success" onClick={this.release}>release</Button>
+                 </div>
+                }
+                {asset.state === 'FORSALE' &&
+                 <div><Button className="mt-3" color="danger" onClick={this.retractOffer}>retract offer</Button></div>
+                }
+                {asset.state === 'RELEASED' &&
+                 <div>
+                     <p>Domain sold! Make sure to transfer the domain to the buyer!</p>
+                 </div>
+                }
+            </div>
+        );
+    }
+};
+
+AgentActions.propTypes = {
+    asset: PropTypes.object.isRequired,
+    domain: PropTypes.string.isRequired,
+    updateBalance: PropTypes.func.isRequired,
+    updateAssetState: PropTypes.func.isRequired,
+    removeAsset: PropTypes.func.isRequired
+};
+
 
 class SellerActions extends Component {
     state = {
@@ -156,8 +218,7 @@ class SellerActions extends Component {
         e.preventDefault();
         const { asset, domain, updateAssetPrice } = this.props;
         const price = this.state.price;
-        const escrowfee = asset.agent ? AGENT_FEES[asset.agent] / 1000 * this.state.price : 0;
-        const handlingfee = HANDLING_FEE / 1000 * this.state.price;
+        const { escrowfee, handlingfee } = getPriceBreakdown(price, asset.agent);
         updateAssetPrice(domain, price, escrowfee, handlingfee);
     }
 
@@ -166,27 +227,20 @@ class SellerActions extends Component {
         this.setState({ price: value });
     }
 
-    releaseAsset = () => {
-        const { domain, updateAssetState } = this.props;
-        updateAssetState(domain, '', null);
-    }
-
     retractOffer = () => {
         const { domain, removeAsset } = this.props;
         removeAsset(domain);
     }
 
     render() {
-        const { asset } = this.props;
+        const { asset, domain } = this.props;
         return (
             <div className="card p-3 mt-1">
-                {asset.state === 'RELEASED' ? <p>Sold this domain!</p> : <p>Manage your offer:</p>}
-                <ul>
-                    <li>Net price: {asset.price} (for you)</li>
-                    <li>Escrow fee: {asset.escrowfee} (for agent)</li>
-                    <li>Handling fee: {asset.handlingfee} (for us)</li>
-                    <li>Sales price: {Number(asset.price) + Number(asset.escrowfee) + Number(asset.handlingfee)}</li>
-                </ul>
+                {asset.state === 'RELEASED' ? <p>Sold this domain!</p> :
+                 <div>
+                     <p>Manage your offer:</p><AssetInfo domain={domain} asset={asset} />
+                 </div>
+                }
                 {asset.state === 'FORSALE' &&
                  <div>
                      <Form inline onSubmit={this.updatePrice}>
