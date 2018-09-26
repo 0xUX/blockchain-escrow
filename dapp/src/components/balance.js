@@ -7,17 +7,17 @@ import { getUserBalance } from '../redux/selectors';
 
 class Balance extends Component {
     state = {
-        deposit: '',
+        //deposit: '',
         withdraw: ''
     }
-    
-    handleDeposit = (e) => {
-        e.preventDefault();
-        const { currentUser, balance, updateBalance } = this.props;
-        const newBalance = balance + Number(this.state.deposit);
-        updateBalance(currentUser, newBalance);
-        this.setState({ deposit: '' });
-    }
+
+    // handleDeposit = (e) => {
+    //     e.preventDefault();
+    //     const { currentUser, balance, updateBalance } = this.props;
+    //     const newBalance = balance + Number(this.state.deposit);
+    //     updateBalance(currentUser, newBalance);
+    //     this.setState({ deposit: '' });
+    // }
 
     handleWithdraw = (e) => {
         e.preventDefault();
@@ -32,13 +32,13 @@ class Balance extends Component {
         const value = e.target.value;
         this.setState({ [name]:value });
     }
-    
+
     render() {
         const { currentUser, balance } = this.props;
         return (
             <div className="card p-3 mt-1">
                 <p>Current balance: {balance} Ether</p>
-                <Form inline onSubmit={this.handleDeposit}>
+                {/*<Form inline onSubmit={this.handleDeposit}>
                     <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                         <Input name="deposit"
                                placeholder="enter amount in Ether"
@@ -47,7 +47,7 @@ class Balance extends Component {
                         />
                     </FormGroup>
                     <Button type="submit">deposit</Button>
-                </Form>
+                </Form>*/}
                 {balance > 0 &&
                  <Form className="mt-1" inline onSubmit={this.handleWithdraw}>
                      <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
