@@ -11,9 +11,12 @@ import { userExists } from '../redux/selectors';
 import Balance from './balance';
 import { getUserBalance } from '../redux/selectors';
 
+import Web3 from 'web3';
+const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
+
 export const BalanceIcon = props => (
     <Button outline size="sm" onClick={props.onClick}>
-        {props.balance} <FontAwesomeIcon icon={['fab', 'ethereum']} />
+        {web3.utils.fromWei(props.balance)} <FontAwesomeIcon icon={['fab', 'ethereum']} />
     </Button>
 )
 
@@ -26,6 +29,11 @@ class Layout extends Component {
     // toggleNavBar = () => {
     //     this.setState({ collapsed: !this.state.collapsed });
     // }
+
+    componentDidMount() {
+        const { onRequestFiat } = this.props;
+        onRequestFiat();
+    }
 
     toggleBalance = () => {
         this.setState({ showBalance: !this.state.showBalance });
@@ -72,7 +80,8 @@ class Layout extends Component {
 }
 
 Layout.propTypes = {
-    isUser: PropTypes.bool.isRequired
+    isUser: PropTypes.bool.isRequired,
+    onRequestFiat: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => {
@@ -81,6 +90,12 @@ const mapStateToProps = state => {
     return { isUser, balance };
 };
 
+const mapDispatchToProps = dispatch => {
+    return {
+        onRequestFiat: () => dispatch({ type: "FIAT_CALL_REQUEST" })
+    };
+};
+
 export default withRouter(connect(
-    mapStateToProps
+    mapStateToProps, mapDispatchToProps
 )(Layout));

@@ -7,6 +7,10 @@ import { addAsset } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE } from '../constants';
 import { userIsAgent } from '../redux/selectors';
 import { PriceBreakdown } from './static';
+import { getPriceBreakdownInWei } from '../lib/util';
+
+import Web3 from 'web3';
+const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
 
 class DomainNameForm extends Component {
     state = {
@@ -18,11 +22,12 @@ class DomainNameForm extends Component {
     handleSubmit = (e) => {
         e.preventDefault();
         const { currentUser, assets, addAsset, agentKey } = this.props;
+        const {netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(this.state.price, agentKey);
         const asset = {
             seller: currentUser,
-            price: Number(this.state.price),
-            escrowfee: agentKey ? AGENT_FEES[agentKey] / 1000 * this.state.price : 0,
-            handlingfee: HANDLING_FEE / 1000 * this.state.price,
+            price: netPrice,
+            escrowfee: escrowfee,
+            handlingfee: handlingfee,
             agent: agentKey || null,
             buyer: null,
             blocknumber: null,

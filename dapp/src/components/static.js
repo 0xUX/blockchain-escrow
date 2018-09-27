@@ -1,7 +1,10 @@
 import React from "react";
 import { USERS, ASSET_STATES } from "../constants";
 import { Link } from 'react-router-dom';
-import { getSalesPrice, getPriceBreakdown } from '../lib/util';
+import { getPriceBreakdownInWei, getSalesPriceInWei } from '../lib/util';
+
+import Web3 from 'web3';
+const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
 
 export const NoMatch = ({ location }) => (
     <div>Page not found: <code>{location.pathname}</code></div>
@@ -17,20 +20,19 @@ export const AssetInfo = ( { asset } ) => (
     <ul>
         <li>Status: {ASSET_STATES[asset.state]}</li>
         <li>Escrow agent: {asset.agent ? USERS[asset.agent] : '-'}</li>
-        <li>Net price: {asset.price}</li>
-        <li>Escrow fee: {asset.escrowfee}</li>
-        <li>Handling fee: {asset.handlingfee}</li>
-        <li>Sales price: {getSalesPrice(asset)}</li>
+        <li>Net price: {web3.utils.fromWei(asset.price)}</li>
+        <li>Escrow fee: {web3.utils.fromWei(asset.escrowfee)}</li>
+        <li>Handling fee: {web3.utils.fromWei(asset.handlingfee)}</li>
+        <li>Sales price: {web3.utils.fromWei(getSalesPriceInWei(asset))}</li>
     </ul>
 );
 
 export const PriceBreakdown = ({ price, agentKey }) => {
-    if(!price) price = 0;
-    const { escrowfee, handlingfee, salesPrice } = getPriceBreakdown(price, agentKey);
+    const { netPrice, escrowfee, handlingfee, salesPrice } = getPriceBreakdownInWei(price, agentKey);
 
     return (
         <div className="border rounded small p-1 mt-2">
-            Net price: {price} | Escrow fee: {escrowfee} | Handling fee: {handlingfee} | Sales price: {salesPrice}
+            Net price: {web3.utils.fromWei(netPrice)} | Escrow fee: {web3.utils.fromWei(escrowfee)} | Handling fee: {web3.utils.fromWei(handlingfee)} | Sales price: {web3.utils.fromWei(salesPrice)}
         </div>
     );
 }

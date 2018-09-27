@@ -7,7 +7,10 @@ import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE } from '../constants';
 import { AssetInfo } from './static';
-import { getSalesPrice, getPriceBreakdown } from '../lib/util';
+import { getSalesPriceInWei, getPriceBreakdownInWei } from '../lib/util';
+
+import Web3 from 'web3';
+const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
 
 const NotForSale = props => (
     <div className="card p-3 mt-1">
@@ -21,11 +24,11 @@ class Domain extends Component {
         const { domain } = match.params;
         const header = <h1>{ASSET_STATES[asset.state]}: <a href={`https://whois.domaintools.com/${domain}`} target="_blank">{domain}</a></h1>;
         if(asset.state === 'NOTFORSALE') return <div>{header}<NotForSale domain={domain} /></div>;
-        const cost = getSalesPrice(asset);
+        const cost = getSalesPriceInWei(asset);
         return (
             <div>
                 {header}
-                {cost > 0 && <h2>{cost} Ether</h2>}
+                {cost > 0 && <h2>{web3.utils.fromWei(cost)} Ether</h2>}
                 {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
                 {role === 'seller' &&
                  <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} />
@@ -48,7 +51,7 @@ Domain.propTypes = {
     currentUser: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     role: PropTypes.string,
-    balance: PropTypes.number.isRequired,
+    balance: PropTypes.string.isRequired,
     updateAssetPrice: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired,
     removeAsset: PropTypes.func.isRequired,
@@ -59,7 +62,7 @@ class ProspectActions extends Component {
 
     buy = () => {
         const { currentUser, balance, asset, updateBalance, updateAssetState, domain } = this.props;
-        const cost = Number(asset.price) + Number(asset.escrowfee) + Number(asset.handlingfee);
+        const cost = getSalesPriceInWei(asset);
 
         // assume the transaction has exactly the value needed to pay
         const value = Math.max(cost - balance, 0);
@@ -77,19 +80,19 @@ class ProspectActions extends Component {
 
     render() {
         const { balance, asset } = this.props;
-        const cost = Number(asset.price) + Number(asset.escrowfee) + Number(asset.handlingfee);
-        const required = cost - balance;
+        const cost = getSalesPriceInWei(asset);
+        const required = web3.utils.toBN(String(cost)).sub(web3.utils.toBN(String(balance)));
         return (
             <div className="card p-3 mt-1">
                 {asset.state === 'FORSALE' ?
                  <div>
                      <p>Buy this domain:</p>
                      <ul>
-                         <li>Domain price: {cost}</li>
-                         <li>Current balance: {balance}</li>
-                         {required > 0 && <li>Additional Ether required: {required}</li>}
+                         <li>Domain price: {web3.utils.fromWei(cost)}</li>
+                         <li>Current balance: {web3.utils.fromWei(balance)}</li>
+                         {required > 0 && <li>Additional Ether required: {web3.utils.fromWei(required)}</li>}
                      </ul>
-                     {required > 0 && <p>You can either top up your balance first, or pay the difference in the transaction.</p>}
+                     {/*required > 0 && <p>You can either top up your balance first, or pay the difference in the transaction.</p>*/}
                      <div><Button color="success" onClick={this.buy}>buy</Button></div>
                  </div> :
                  <p>This domain is sold.</p>
@@ -103,7 +106,7 @@ ProspectActions.propTypes = {
     currentUser: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
-    balance: PropTypes.number.isRequired,
+    balance: PropTypes.string.isRequired,
     updateBalance: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired
 };
@@ -209,15 +212,15 @@ AgentActions.propTypes = {
 
 class SellerActions extends Component {
     state = {
-        price: this.props.asset.price
+        price: web3.utils.fromWei(this.props.asset.price)
     }
 
     updatePrice = (e) => {
         e.preventDefault();
         const { asset, domain, updateAssetPrice } = this.props;
         const price = this.state.price;
-        const { escrowfee, handlingfee } = getPriceBreakdown(price, asset.agent);
-        updateAssetPrice(domain, price, escrowfee, handlingfee);
+        const { netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(price, asset.agent);
+        updateAssetPrice(domain, netPrice, escrowfee, handlingfee);
     }
 
     handleChange = (e) => {

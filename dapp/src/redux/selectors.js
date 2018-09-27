@@ -22,8 +22,8 @@ export const getAgentAssets = store => {
 
 export const getUserBalance = store => {
     const user = store.currentUser;
-    if(!user || !store.balances[user]) return 0;
-    return Number(store.balances[user]);
+    if(!user || !store.balances[user]) return '0';
+    return store.balances[user];
 };
 
 export const userIsAgent = store => {
