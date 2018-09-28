@@ -3,10 +3,9 @@ import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Link, NavLink as RouterNavLink, withRouter } from 'react-router-dom';
 import { Container, Button, Navbar, NavbarBrand, NavItem, Nav } from 'reactstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 //import { Collapse, NavbarToggler, Nav, NavItem, NavLink } from 'reactstrap';
 import SelectCurrentUser from './select-current-user';
-import Message from './message';
+import { Message } from './ui';
 import { userExists } from '../redux/selectors';
 import Balance from './balance';
 import { getUserBalance } from '../redux/selectors';
@@ -16,7 +15,7 @@ const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @
 
 export const BalanceIcon = props => (
     <Button outline size="sm" onClick={props.onClick}>
-        {web3.utils.fromWei(props.balance)} <FontAwesomeIcon icon={['fab', 'ethereum']} />
+        {'\u039E '}{web3.utils.fromWei(props.balance)}
     </Button>
 )
 
@@ -32,7 +31,7 @@ class Layout extends Component {
 
     componentDidMount() {
         const { onRequestFiat } = this.props;
-        onRequestFiat();
+        onRequestFiat('USD');
     }
 
     toggleBalance = () => {
@@ -40,7 +39,7 @@ class Layout extends Component {
     }
 
     render() {
-        const { isUser, balance } = this.props;
+        const { isUser, balance, currency } = this.props;
         const { showBalance } = this.state;
         return (
             <div>
@@ -81,18 +80,20 @@ class Layout extends Component {
 
 Layout.propTypes = {
     isUser: PropTypes.bool.isRequired,
-    onRequestFiat: PropTypes.func.isRequired
+    onRequestFiat: PropTypes.func.isRequired,
+    balance: PropTypes.string.isRequired,
+    currency: PropTypes.string.isRequired
 };
 
 const mapStateToProps = state => {
     const isUser = userExists(state);
     const balance = getUserBalance(state);
-    return { isUser, balance };
+    return { isUser, balance, currency: state.currency };
 };
 
 const mapDispatchToProps = dispatch => {
     return {
-        onRequestFiat: () => dispatch({ type: "FIAT_CALL_REQUEST" })
+        onRequestFiat: currency => dispatch({ type: "FIAT_CALL_REQUEST", payload: {currency} })
     };
 };
 

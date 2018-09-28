@@ -1,16 +1,11 @@
 import React, { Component } from "react";
 import { BrowserRouter as Router, Route, Switch, Link, Redirect } from 'react-router-dom';
 import {hot} from "react-hot-loader";
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEthereum } from '@fortawesome/free-brands-svg-icons';
 import Layout from './components/layout';
-import Home from './components/home'
+import Home from './components/home';
 import Domain from './components/domain';
 import { Agent, SellViaAgent } from './components/agent';
 import { NoMatch } from './components/static';
-
-library.add(faEthereum);
 
 class App extends Component {
     render() {

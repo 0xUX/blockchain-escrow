@@ -39,11 +39,13 @@ class Balance extends Component {
     }
 
     render() {
-        const { currentUser, balance, fiat } = this.props;
+        const { currentUser, balance, fiat, currency } = this.props;
+        const balanceInEther = web3.utils.fromWei(balance);
+        const balanceInFiat = balanceInEther * fiat.fiat; // @@@ loading...
         console.log(fiat);
         return (
             <div className="card p-3 mt-1">
-                <p>Current balance: {web3.utils.fromWei(balance)}</p>
+                <p>Current balance: {formatAmount('eth', balanceInEther)} (Ether) {' \u2245 '} {formatAmount(currency, balanceInFiat)}</p>
                 {/*<Form inline onSubmit={this.handleDeposit}>
                     <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                     <Input name="deposit"
@@ -75,12 +77,13 @@ Balance.propTypes = {
     currentUser: PropTypes.string.isRequired,
     balance: PropTypes.string.isRequired,
     updateBalance: PropTypes.func.isRequired,
-    fiat: PropTypes.object
+    fiat: PropTypes.object.isRequired,
+    currency: PropTypes.string.isRequired
 };
 
 const mapStateToProps = state => {
     const balance = getUserBalance(state);
-    return { currentUser: state.currentUser, balance, fiat: state.fiat };
+    return { currentUser: state.currentUser, balance, fiat: state.fiat, currency: state.currency };
 };
 
 export default connect(

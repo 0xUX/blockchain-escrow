@@ -7,17 +7,18 @@ export function* watcherSaga() {
 }
 
 // function that makes the api request and returns a Promise for response
-function fetchFiat() {
+function fetchFiat(currency) {
+    const symbol = 'eth' + currency.toLowerCase();
     return axios({
         method: "get",
-        url: "https://api.infura.io/v1/ticker/ethusd"
+        url: `https://api.infura.io/v1/ticker/${symbol}`
     });
 }
 
 // worker saga: makes the api call when watcher saga sees the action
-function* workerSaga() {
+function* workerSaga(action) {
     try {
-        const response = yield call(fetchFiat);
+        const response = yield call(fetchFiat, action.payload.currency);
         const fiat = response.data.bid;
 
         // dispatch a success action to the store with the new fiat

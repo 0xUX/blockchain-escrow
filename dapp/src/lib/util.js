@@ -21,7 +21,9 @@ export const getSalesPriceInWei = (asset) => {
 
 export const formatAmount = (currency, amount) => {
     const BN = web3.utils.BN;
-    if(currency === 'wei') {
+    if(currency === 'eth') {
+        return '\u039E ' + amount;
+        // @@@@@@@@@@@@@@@@ vvvvvvv
         amount = '31415926500000000000';
         const balanceWeiBN = new BN(amount);
         const decimals = 18;
