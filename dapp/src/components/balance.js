@@ -5,9 +5,7 @@ import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateBalance } from '../redux/actions';
 import { getUserBalance } from '../redux/selectors';
 import { formatAmount } from '../lib/util';
-
-import Web3 from 'web3';
-const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
+import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 class Balance extends Component {
     state = {
@@ -18,8 +16,8 @@ class Balance extends Component {
     // handleDeposit = (e) => {
     //     e.preventDefault();
     //     const { currentUser, balance, updateBalance } = this.props;
-    //     const newBalance = web3.utils.fromWei(balance) + Number(this.state.deposit);
-    //     updateBalance(currentUser, web3.utils.toWei(String(newBalance)));
+    //     const newBalance = web3utils.fromWei(balance) + Number(this.state.deposit);
+    //     updateBalance(currentUser, web3utils.toWei(String(newBalance)));
     //     this.setState({ deposit: '' });
     // }
 
@@ -27,8 +25,8 @@ class Balance extends Component {
         e.preventDefault();
         const { currentUser, balance, updateBalance } = this.props;
 
-        let newBalance = Math.max(0, web3.utils.fromWei(balance) - Number(this.state.withdraw));
-        updateBalance(currentUser, web3.utils.toWei(String(newBalance)));
+        let newBalance = Math.max(0, web3utils.fromWei(balance) - Number(this.state.withdraw));
+        updateBalance(currentUser, web3utils.toWei(String(newBalance)));
         this.setState({ withdraw: '' });
     }
 
@@ -40,7 +38,7 @@ class Balance extends Component {
 
     render() {
         const { currentUser, balance, fiat, currency } = this.props;
-        const balanceInEther = web3.utils.fromWei(balance);
+        const balanceInEther = web3utils.fromWei(balance);
         const balanceInFiat = balanceInEther * fiat.fiat; // @@@ loading...
         console.log(fiat);
         return (

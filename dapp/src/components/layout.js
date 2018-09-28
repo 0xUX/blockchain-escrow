@@ -9,13 +9,11 @@ import { Message } from './ui';
 import { userExists } from '../redux/selectors';
 import Balance from './balance';
 import { getUserBalance } from '../redux/selectors';
-
-import Web3 from 'web3';
-const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
+import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 export const BalanceIcon = props => (
     <Button outline size="sm" onClick={props.onClick}>
-        {'\u039E '}{web3.utils.fromWei(props.balance)}
+        {'\u039E '}{web3utils.fromWei(props.balance)}
     </Button>
 )
 

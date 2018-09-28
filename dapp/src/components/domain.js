@@ -8,9 +8,7 @@ import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE } from '../constants';
 import { AssetInfo } from './static';
 import { getSalesPriceInWei, getPriceBreakdownInWei } from '../lib/util';
-
-import Web3 from 'web3';
-const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
+import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 const NotForSale = props => (
     <div className="card p-3 mt-1">
@@ -28,7 +26,7 @@ class Domain extends Component {
         return (
             <div>
                 {header}
-                {cost > 0 && <h2>{web3.utils.fromWei(cost)} Ether</h2>}
+                {cost > 0 && <h2>{web3utils.fromWei(cost)} Ether</h2>}
                 {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
                 {role === 'seller' &&
                  <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} />
@@ -81,16 +79,16 @@ class ProspectActions extends Component {
     render() {
         const { balance, asset } = this.props;
         const cost = getSalesPriceInWei(asset);
-        const required = web3.utils.toBN(String(cost)).sub(web3.utils.toBN(String(balance)));
+        const required = web3utils.toBN(String(cost)).sub(web3utils.toBN(String(balance)));
         return (
             <div className="card p-3 mt-1">
                 {asset.state === 'FORSALE' ?
                  <div>
                      <p>Buy this domain:</p>
                      <ul>
-                         <li>Domain price: {web3.utils.fromWei(cost)}</li>
-                         <li>Current balance: {web3.utils.fromWei(balance)}</li>
-                         {required > 0 && <li>Additional Ether required: {web3.utils.fromWei(required)}</li>}
+                         <li>Domain price: {web3utils.fromWei(cost)}</li>
+                         <li>Current balance: {web3utils.fromWei(balance)}</li>
+                         {required > 0 && <li>Additional Ether required: {web3utils.fromWei(required)}</li>}
                      </ul>
                      {/*required > 0 && <p>You can either top up your balance first, or pay the difference in the transaction.</p>*/}
                      <div><Button color="success" onClick={this.buy}>buy</Button></div>
@@ -212,7 +210,7 @@ AgentActions.propTypes = {
 
 class SellerActions extends Component {
     state = {
-        price: web3.utils.fromWei(this.props.asset.price)
+        price: web3utils.fromWei(this.props.asset.price)
     }
 
     updatePrice = (e) => {

@@ -1,26 +1,24 @@
 import { AGENT_FEES, HANDLING_FEE } from '../constants';
-
-import Web3 from 'web3';
-const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
+import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 export const getPriceBreakdownInWei = (priceInEther, agentKey) => {
     if(!priceInEther) priceInEther = '0';
-    const netPrice = web3.utils.toWei(priceInEther, 'ether');
-    const netPriceBN = web3.utils.toBN(netPrice); // needed for math with big wei numbers
-    const escrowfee = agentKey ? netPriceBN.divn(1000).muln(AGENT_FEES[agentKey]) : web3.utils.toBN('0');
+    const netPrice = web3utils.toWei(priceInEther, 'ether');
+    const netPriceBN = web3utils.toBN(netPrice); // needed for math with big wei numbers
+    const escrowfee = agentKey ? netPriceBN.divn(1000).muln(AGENT_FEES[agentKey]) : web3utils.toBN('0');
     const handlingfee = netPriceBN.divn(1000).muln(HANDLING_FEE);
     const salesPrice = netPriceBN.add(escrowfee).add(handlingfee);
     return { netPrice, escrowfee:escrowfee.toString(10), handlingfee: handlingfee.toString(10), salesPrice: salesPrice.toString(10) };
 };
 
 export const getSalesPriceInWei = (asset) => {
-    const priceInEther = web3.utils.fromWei(asset.price);
+    const priceInEther = web3utils.fromWei(asset.price);
     const { salesPrice } = getPriceBreakdownInWei(priceInEther, asset.agent);
     return salesPrice;
 };
 
 export const formatAmount = (currency, amount) => {
-    const BN = web3.utils.BN;
+    const BN = web3utils.BN;
     if(currency === 'eth') {
         return '\u039E ' + amount;
         // @@@@@@@@@@@@@@@@ vvvvvvv

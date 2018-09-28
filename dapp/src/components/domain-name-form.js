@@ -10,9 +10,6 @@ import { ADD_ASSET, FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/actionTypes
 import { PriceBreakdown } from './static';
 import { getPriceBreakdownInWei } from '../lib/util';
 
-import Web3 from 'web3';
-const web3 = new Web3(Web3.givenProvider || "ws://localhost:8546"); // for now @@@@@@
-
 const CurrencySelector = props => {
     const { currency, setCurrency, onRequestFiat } = props;
 
