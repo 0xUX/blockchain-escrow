@@ -75,8 +75,8 @@ const PriceInput = props => {
 };
 
 PriceInput.propTypes = {
-    price: PriceInput.string.isRequired,
-    handlePriceChange: PriceInput.func.isRequired,
+    price: PropTypes.string.isRequired,
+    handlePriceChange: PropTypes.func.isRequired,
     currency: PropTypes.string.isRequired,
     setCurrency: PropTypes.func.isRequired,
     onRequestFiat: PropTypes.func.isRequired,
