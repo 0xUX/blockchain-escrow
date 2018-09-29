@@ -6,7 +6,7 @@ import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE } from '../constants';
-import { AssetInfo } from './static';
+import { AssetInfo, PriceInput } from './static';
 import { getSalesPriceInWei, getPriceBreakdownInWei } from '../lib/util';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 
@@ -18,7 +18,7 @@ const NotForSale = props => (
 
 class Domain extends Component {
     render() {
-        const { match, currentUser, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance } = this.props;
+        const { match, currentUser, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance, fiat } = this.props;
         const { domain } = match.params;
         const header = <h1>{ASSET_STATES[asset.state]}: <a href={`https://whois.domaintools.com/${domain}`} target="_blank">{domain}</a></h1>;
         if(asset.state === 'NOTFORSALE') return <div>{header}<NotForSale domain={domain} /></div>;
@@ -29,7 +29,7 @@ class Domain extends Component {
                 {cost > 0 && <h2>{web3utils.fromWei(cost)} Ether</h2>}
                 {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
                 {role === 'seller' &&
-                 <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} />
+                 <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} fiat={fiat} />
                 }
                 {role === 'prospect' &&
                  <ProspectActions currentUser={currentUser} asset={asset} domain={domain} balance={balance} updateAssetState={updateAssetState} updateBalance={updateBalance} />
@@ -53,7 +53,8 @@ Domain.propTypes = {
     updateAssetPrice: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired,
     removeAsset: PropTypes.func.isRequired,
-    updateBalance: PropTypes.func.isRequired
+    updateBalance: PropTypes.func.isRequired,
+    fiat: PropTypes.object.isRequired
 };
 
 class ProspectActions extends Component {
@@ -79,7 +80,7 @@ class ProspectActions extends Component {
     render() {
         const { balance, asset } = this.props;
         const cost = getSalesPriceInWei(asset);
-        const required = web3utils.toBN(String(cost)).sub(web3utils.toBN(String(balance)));
+        const required = web3utils.toBN(String(cost)).sub(web3utils.toBN(String(balance))).toString(10);
         return (
             <div className="card p-3 mt-1">
                 {asset.state === 'FORSALE' ?
@@ -88,7 +89,7 @@ class ProspectActions extends Component {
                      <ul>
                          <li>Domain price: {web3utils.fromWei(cost)}</li>
                          <li>Current balance: {web3utils.fromWei(balance)}</li>
-                         {required > 0 && <li>Additional Ether required: {web3utils.fromWei(required)}</li>}
+                         {Number(required) > 0 && <li>Additional Ether required: {web3utils.fromWei(required)}</li>}
                      </ul>
                      {/*required > 0 && <p>You can either top up your balance first, or pay the difference in the transaction.</p>*/}
                      <div><Button color="success" onClick={this.buy}>buy</Button></div>
@@ -221,9 +222,19 @@ class SellerActions extends Component {
         updateAssetPrice(domain, netPrice, escrowfee, handlingfee);
     }
 
-    handleChange = (e) => {
-        const value = e.target.value;
-        this.setState({ price: value });
+    handlePriceChange = (e) => {
+        const { fiat } = this.props;
+        if(fiat.fiat !== null) {
+            const name = e.target.name;
+            const value = e.target.value;
+            if(name === 'price') { // typing in ETH input
+                this.setState({ price: value });
+            } else if (name === 'fiat') { // typing in fiat input
+                let ethValue = String((value / fiat.fiat).toFixed(18));
+                if(Number(ethValue) === 0) ethValue = '';
+                this.setState({ price: ethValue });
+            }
+        }
     }
 
     retractOffer = () => {
@@ -242,14 +253,8 @@ class SellerActions extends Component {
                 }
                 {asset.state === 'FORSALE' &&
                  <div>
-                     <Form inline onSubmit={this.updatePrice}>
-                         <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
-                             <Input name="price"
-                                    placeholder="enter amount in Ether"
-                                    onChange={this.handleChange}
-                                    value={this.state.price}
-                             />
-                         </FormGroup>
+                     <Form onSubmit={this.updatePrice}>
+                         <PriceInput price={this.state.price} handlePriceChange={this.handlePriceChange} />
                          <Button type="submit">update price</Button>
                      </Form>
                      <Button className="mt-3" color="danger" onClick={this.retractOffer}>retract offer</Button>
@@ -264,7 +269,8 @@ SellerActions.propTypes = {
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
     updateAssetPrice: PropTypes.func.isRequired,
-    removeAsset: PropTypes.func.isRequired
+    removeAsset: PropTypes.func.isRequired,
+    fiat: PropTypes.object.isRequired
 };
 
 const mapStateToProps = (state, props) => {
@@ -272,7 +278,7 @@ const mapStateToProps = (state, props) => {
     const asset = getAsset(state, domain);
     const role = getRole(state, domain);
     const balance = getUserBalance(state);
-    return { currentUser: state.currentUser, asset, role, balance };
+    return { currentUser: state.currentUser, asset, role, balance, fiat: state.fiat };
 };
 
 export default connect(
