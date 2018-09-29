@@ -38,11 +38,55 @@ CurrencySelector.propTypes = {
     fiat: PropTypes.object.isRequired
 };
 
+const PriceInput = props => {
+    const { price, handlePriceChange, setCurrency, currency, onRequestFiat, fiat } = props;
+    let fiatValue = String(Math.round(price * fiat.fiat));
+    if(fiatValue === '0') fiatValue = '';
+
+    return (
+        <FormGroup row>
+            <Col>
+                <div className="input-group">
+                    <div className="input-group-prepend">
+                        <div className="input-group-text">ETH</div>
+                    </div>
+                    <Input name="price"
+                           placeholder="enter price in Ether"
+                           onChange={handlePriceChange}
+                           value={price}
+                    />
+                </div>
+            </Col>
+            <Col>
+                <div className="input-group">
+                    <div className="input-group-prepend">
+                        <div className="input-group-text">{currency}</div>
+                    </div>
+                    <Input name="fiat"
+                           placeholder={`enter price in ${currency}`}
+                           onChange={handlePriceChange}
+                           value={fiatValue}
+                    />
+                </div>
+                <CurrencySelector currency={currency} setCurrency={setCurrency} onRequestFiat={onRequestFiat} fiat={fiat} />
+            </Col>
+        </FormGroup>
+    );
+};
+
+PriceInput.propTypes = {
+    price: PriceInput.string.isRequired,
+    handlePriceChange: PriceInput.func.isRequired,
+    currency: PropTypes.string.isRequired,
+    setCurrency: PropTypes.func.isRequired,
+    onRequestFiat: PropTypes.func.isRequired,
+    fiat: PropTypes.object.isRequired
+};
 
 class DomainNameForm extends Component {
     state = {
         domain: '',
-        price: '',
+        price: '', // price in Ether (string)
         done: false
     }
 
@@ -84,10 +128,8 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { currentUser, agentKey, isAgent, setCurrency, currency, onRequestFiat, fiat } = this.props;
+        const { currentUser, agentKey, isAgent, fiat } = this.props;
         if(agentKey && this.state.done) return <Redirect to="/" />;
-        let fiatValue = String(Math.round(this.state.price * fiat.fiat));
-        if(fiatValue === '0') fiatValue = '';
         return (
             <div className="card p-3 mt-1">
                 <h3>Sell a domain name:</h3>
@@ -102,33 +144,7 @@ class DomainNameForm extends Component {
                             <small>Enter the FQDN, for example: yahoo.com</small>
                         </Col>
                     </FormGroup>
-                    <FormGroup row>
-                        <Col>
-                            <div className="input-group">
-                                <div className="input-group-prepend">
-                                    <div className="input-group-text">ETH</div>
-                                </div>
-                                <Input name="price"
-                                       placeholder="enter price in Ether"
-                                       onChange={this.handlePriceChange}
-                                       value={this.state.price}
-                                />
-                            </div>
-                        </Col>
-                        <Col>
-                            <div className="input-group">
-                                <div className="input-group-prepend">
-                                    <div className="input-group-text">{currency}</div>
-                                </div>
-                                <Input name="fiat"
-                                       placeholder={`enter price in ${currency}`}
-                                       onChange={this.handlePriceChange}
-                                       value={fiatValue}
-                                />
-                            </div>
-                            <CurrencySelector currency={currency} setCurrency={setCurrency} onRequestFiat={onRequestFiat} fiat={fiat} />
-                        </Col>
-                    </FormGroup>
+                    <PriceInput price={this.state.price} handlePriceChange={this.handlePriceChange} {...this.props} />
                     <Button type="submit" color="success">create offer</Button>
                 </Form>
                 <PriceBreakdown price={this.state.price} agentKey={agentKey} />
