@@ -11,7 +11,6 @@ class Home extends Component {
         const { currentUser, isAgent } = this.props;
         return (
             <div>
-                <h1>Home</h1>
                 {isAgent && <AgentLink agentKey={currentUser} />}
                 <DomainNameForm />
                 <UserAssets />

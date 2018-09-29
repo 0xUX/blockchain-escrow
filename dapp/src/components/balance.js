@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Button, Form, FormGroup, Input } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { updateBalance } from '../redux/actions';
 import { getUserBalance } from '../redux/selectors';
 import { formatAmount } from '../lib/util';
@@ -39,11 +40,11 @@ class Balance extends Component {
     render() {
         const { currentUser, balance, fiat, currency } = this.props;
         const balanceInEther = web3utils.fromWei(balance);
-        const balanceInFiat = balanceInEther * fiat.fiat; // @@@ loading...
+        const balanceInFiat = fiat.fetching ? <FontAwesomeIcon icon="circle-notch" spin /> : formatAmount(currency, balanceInEther * fiat.fiat);
         console.log(fiat);
         return (
             <div className="card p-3 mt-1">
-                <p>Current balance: {formatAmount('eth', balanceInEther)} (Ether) {' \u2245 '} {formatAmount(currency, balanceInFiat)}</p>
+                <p>Current balance: {formatAmount('eth', balanceInEther)} (Ether) {' \u2245 '} {balanceInFiat}</p>
                 {/*<Form inline onSubmit={this.handleDeposit}>
                     <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                     <Input name="deposit"

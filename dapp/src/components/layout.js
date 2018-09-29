@@ -36,6 +36,12 @@ class Layout extends Component {
         this.setState({ showBalance: !this.state.showBalance });
     }
 
+    showMessages = () => {
+        const { isUser, fiat, currency } = this.props;
+        if(!isUser) return <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />;
+        if(fiat.error) return <Message color="danger" msg={`Unable to load the conversion rate for ETH to ${currency}.`} />;
+    }
+
     render() {
         const { isUser, balance, currency } = this.props;
         const { showBalance } = this.state;
@@ -62,7 +68,7 @@ class Layout extends Component {
                 </Navbar>
                 <Container className="pb-5">
                     <SelectCurrentUser />
-                    {!isUser && <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />}
+                    {this.showMessages()}
                     {showBalance && <Balance />}
                     {isUser && this.props.children}
                 </Container>
@@ -80,13 +86,14 @@ Layout.propTypes = {
     isUser: PropTypes.bool.isRequired,
     onRequestFiat: PropTypes.func.isRequired,
     balance: PropTypes.string.isRequired,
-    currency: PropTypes.string.isRequired
+    currency: PropTypes.string.isRequired,
+    fiat: PropTypes.object.isRequired
 };
 
 const mapStateToProps = state => {
     const isUser = userExists(state);
     const balance = getUserBalance(state);
-    return { isUser, balance, currency: state.currency };
+    return { isUser, balance, currency: state.currency, fiat: state.fiat };
 };
 
 const mapDispatchToProps = dispatch => {

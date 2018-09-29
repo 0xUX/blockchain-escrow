@@ -6,9 +6,14 @@ export function* watcherSaga() {
     yield takeLatest("FIAT_CALL_REQUEST", workerSaga);
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // function that makes the api request and returns a Promise for response
-function fetchFiat(currency) {
+async function fetchFiat(currency) {
     const symbol = 'eth' + currency.toLowerCase();
+    // await sleep(5000); // emaulate slow API
     return axios({
         method: "get",
         url: `https://api.infura.io/v1/ticker/${symbol}`

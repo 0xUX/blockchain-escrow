@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Link, Redirect } from 'react-router-dom';
 import { Button, ButtonGroup, Form, FormGroup, Label, Input, Col } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { addAsset, setCurrency } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE, CURRENCIES } from '../constants';
 import { userIsAgent } from '../redux/selectors';
@@ -11,7 +12,7 @@ import { PriceBreakdown } from './static';
 import { getPriceBreakdownInWei } from '../lib/util';
 
 const CurrencySelector = props => {
-    const { currency, setCurrency, onRequestFiat } = props;
+    const { currency, setCurrency, onRequestFiat, fiat } = props;
 
     const handleClick = (c) => {
         setCurrency(c);
@@ -20,11 +21,12 @@ const CurrencySelector = props => {
 
     return (
         <ButtonGroup size="sm" className="mt-1">
-          {CURRENCIES.map(c => {
-              return (
-                  <Button onClick={() => handleClick(c)} outline key={c} active={c === currency}>{c}</Button>
-              );
-          })}
+            {CURRENCIES.map(c => {
+                 const buttonTxt = fiat.fetching && c === currency ? <span><FontAwesomeIcon icon="circle-notch" spin /> {c}</span> : c;
+                 return (
+                     <Button onClick={() => handleClick(c)} outline key={c} active={c === currency}>{buttonTxt}</Button>
+                 );
+            })}
         </ButtonGroup>
     );
 };
@@ -32,7 +34,8 @@ const CurrencySelector = props => {
 CurrencySelector.propTypes = {
     currency: PropTypes.string.isRequired,
     setCurrency: PropTypes.func.isRequired,
-    onRequestFiat: PropTypes.func.isRequired
+    onRequestFiat: PropTypes.func.isRequired,
+    fiat: PropTypes.object.isRequired
 };
 
 
@@ -123,7 +126,7 @@ class DomainNameForm extends Component {
                                        value={fiatValue}
                                 />
                             </div>
-                            <CurrencySelector currency={currency} setCurrency={setCurrency} onRequestFiat={onRequestFiat} />
+                            <CurrencySelector currency={currency} setCurrency={setCurrency} onRequestFiat={onRequestFiat} fiat={fiat} />
                         </Col>
                     </FormGroup>
                     <Button type="submit" color="success">create offer</Button>
