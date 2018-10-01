@@ -6,6 +6,7 @@ import { Container, Button, Navbar, NavbarBrand, NavItem, Nav } from 'reactstrap
 //import { Collapse, NavbarToggler, Nav, NavItem, NavLink } from 'reactstrap';
 import SelectCurrentUser from './select-current-user';
 import { Message } from './ui';
+import { formatAmount } from '../lib/util';
 import { userExists } from '../redux/selectors';
 import Balance from './balance';
 import { getUserBalance } from '../redux/selectors';
@@ -13,7 +14,7 @@ import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 export const BalanceIcon = props => (
     <Button outline size="sm" onClick={props.onClick}>
-        {'\u039E '}{web3utils.fromWei(props.balance)}
+        {formatAmount('eth', Number(web3utils.fromWei(props.balance)))}
     </Button>
 )
 

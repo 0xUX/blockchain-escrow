@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Link } from 'react-router-dom';
 import { Button, ButtonGroup, Form, FormGroup, Input, Col } from 'reactstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { USERS, ASSET_STATES, CURRENCIES } from "../constants";
-import { getPriceBreakdownInWei, getSalesPriceInWei } from '../lib/util';
+import { USERS, ASSET_STATES, CURRENCIES, DISPLAY_ETHER_DECIMALS } from "../constants";
+import { getPriceBreakdownInWei, getSalesPriceInEther } from '../lib/util';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 import { FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/actionTypes';
+import { setCurrency } from "../redux/actions";
+import { DelayedSpinner, AmountPlusFiat } from './ui.js';
 
 
 export const NoMatch = ({ location }) => (
@@ -26,10 +27,10 @@ export const AssetInfo = ( { asset } ) => (
     <ul>
         <li>Status: {ASSET_STATES[asset.state]}</li>
         <li>Escrow agent: {asset.agent ? USERS[asset.agent] : '-'}</li>
-        <li>Net price: {web3utils.fromWei(asset.price)}</li>
-        <li>Escrow fee: {web3utils.fromWei(asset.escrowfee)}</li>
-        <li>Handling fee: {web3utils.fromWei(asset.handlingfee)}</li>
-        <li>Sales price: {web3utils.fromWei(getSalesPriceInWei(asset))}</li>
+        <li>Net price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.price))} /></li>
+        <li>Escrow fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.escrowfee))} /></li>
+        <li>Handling fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.handlingfee))} /></li>
+        <li>Sales price: <AmountPlusFiat amountInEther={getSalesPriceInEther(asset)} /></li>
     </ul>
 );
 
@@ -39,17 +40,28 @@ export const PriceBreakdown = ({ price, agentKey }) => {
 
     return (
         <div className="border rounded small p-1 mt-2">
-            Net price: {web3utils.fromWei(netPrice)} | Escrow fee: {web3utils.fromWei(escrowfee)} | Handling fee: {web3utils.fromWei(handlingfee)} | Sales price: {web3utils.fromWei(salesPrice)}
-        </div>
-    );
+            Net price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(netPrice))} /><br />
+            Escrow fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(escrowfee))} /><br />
+            Handling fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(handlingfee))} /><br />
+            Sales price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(salesPrice))} />
+            </div>
+            );
 }
 
 
 export let PriceInput = props => {
-    const { price, handlePriceChange, setCurrency, currency, onRequestFiat, fiat } = props;
-    let fiatValue = String(Math.round(price * fiat.fiat));
-    if(fiatValue === '0') fiatValue = '';
-
+    const { price, fiatInput, activeInput, handlePriceChange, currency, fiat } = props;
+    let fiatValue, ethValue;
+    if(activeInput === 'fiat') {
+        fiatValue = fiatInput;
+        const precision = 10 ** DISPLAY_ETHER_DECIMALS;
+        ethValue = String(Math.round(price * precision) / precision);
+        if(ethValue === '0') ethValue = '';
+    } else { // either 'eth' or null
+        fiatValue = String(Math.round(price * fiat.fiat * 100) / 100);
+        ethValue = price;
+        if(fiatValue === '0') fiatValue = '';
+    }
     return (
         <FormGroup row>
             <Col>
@@ -60,7 +72,7 @@ export let PriceInput = props => {
                     <Input name="price"
                            placeholder="enter price in Ether"
                            onChange={handlePriceChange}
-                           value={price}
+                           value={ethValue}
                     />
                 </div>
             </Col>
@@ -75,7 +87,7 @@ export let PriceInput = props => {
                            value={fiatValue}
                     />
                 </div>
-                <CurrencySelector currency={currency} setCurrency={setCurrency} onRequestFiat={onRequestFiat} fiat={fiat} />
+                <CurrencySelector />
             </Col>
         </FormGroup>
     );
@@ -83,10 +95,10 @@ export let PriceInput = props => {
 
 PriceInput.propTypes = {
     price: PropTypes.string.isRequired,
+    fiatInput: PropTypes.string.isRequired,
+    activeInput: PropTypes.oneOf(['eth', 'fiat']),
     handlePriceChange: PropTypes.func.isRequired,
     currency: PropTypes.string.isRequired,
-    setCurrency: PropTypes.func.isRequired,
-    onRequestFiat: PropTypes.func.isRequired,
     fiat: PropTypes.object.isRequired
 };
 
@@ -94,18 +106,11 @@ const mapStateToProps = state => {
     return { currency: state.currency, fiat: state.fiat };
 };
 
-const mapDispatchToProps = dispatch => {
-    return {
-        onRequestFiat: currency => dispatch({ type: FIAT_CALL_REQUEST, payload: {currency} }),
-        setCurrency: currency => dispatch({ type: SET_CURRENCY, payload: {currency} })
-    };
-};
-
 PriceInput = connect(
-    mapStateToProps, mapDispatchToProps
+    mapStateToProps, { setCurrency }
 )(PriceInput);
 
-const CurrencySelector = props => {
+export let CurrencySelector = props => {
     const { currency, setCurrency, onRequestFiat, fiat } = props;
 
     const handleClick = (c) => {
@@ -116,7 +121,7 @@ const CurrencySelector = props => {
     return (
         <ButtonGroup size="sm" className="mt-1">
             {CURRENCIES.map(c => {
-                 const buttonTxt = fiat.fetching && c === currency ? <span><FontAwesomeIcon icon="circle-notch" spin /> {c}</span> : c;
+                 const buttonTxt = fiat.fetching && c === currency ? <span><DelayedSpinner /> {c}</span> : c;
                  return (
                      <Button onClick={() => handleClick(c)} outline key={c} active={c === currency}>{buttonTxt}</Button>
                  );
@@ -131,3 +136,14 @@ CurrencySelector.propTypes = {
     onRequestFiat: PropTypes.func.isRequired,
     fiat: PropTypes.object.isRequired
 };
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onRequestFiat: currency => dispatch({ type: FIAT_CALL_REQUEST, payload: {currency} }),
+        setCurrency: currency => dispatch({ type: SET_CURRENCY, payload: {currency} })
+    };
+};
+
+CurrencySelector = connect(
+    mapStateToProps, mapDispatchToProps
+)(CurrencySelector);

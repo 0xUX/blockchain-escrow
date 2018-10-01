@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Link, Redirect } from 'react-router-dom';
 import { Button, ButtonGroup, Form, FormGroup, Input, Col } from 'reactstrap';
 import { addAsset, setCurrency } from '../redux/actions';
-import { AGENT_FEES, HANDLING_FEE } from '../constants';
+import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
 import { userIsAgent } from '../redux/selectors';
 import { ADD_ASSET, FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/actionTypes';
 import { PriceBreakdown, PriceInput } from './static';
@@ -15,6 +15,8 @@ class DomainNameForm extends Component {
     state = {
         domain: '',
         price: '', // price in Ether (string)
+        fiatInput: '',
+        activeInput: null, // either eth or fiat, field we're typing in
         done: false
     }
 
@@ -38,15 +40,18 @@ class DomainNameForm extends Component {
 
     handlePriceChange = (e) => {
         const { fiat } = this.props;
-        if(fiat.fiat !== null) {
-            const name = e.target.name;
-            const value = e.target.value;
-            if(name === 'price') { // typing in ETH input
-                this.setState({ price: value });
-            } else if (name === 'fiat') { // typing in fiat input
-                let ethValue = String((value / fiat.fiat).toFixed(18));
-                if(Number(ethValue) === 0) ethValue = '';
-                this.setState({ price: ethValue });
+        const precision = 10 ** INPUT_ETHER_DECIMALS;
+        const name = e.target.name;
+        const value = e.target.value;
+        if(name === 'price') { // typing in ETH input
+            if(value && !/^[0-9]{1,7}\.?[0-9]{0,18}$/.test(value)) return;
+            const fiatValue = String(Math.round(value * fiat.fiat * 100) / 100);
+            this.setState({ activeInput: 'eth', price: value, fiatInput: fiatValue });
+        } else if (name === 'fiat') { // typing in fiat input
+            if(fiat.fiat !== null) {
+                if(value && !/^[0-9]{1,10}\.?[0-9]{0,2}$/.test(value)) return;
+                const ethValue = String(Math.round(value / fiat.fiat * precision) / precision);
+                this.setState({ activeInput: 'fiat', price: ethValue, fiatInput: value });
             }
         }
     }
@@ -58,7 +63,7 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { currentUser, agentKey, isAgent, fiat } = this.props;
+        const { currentUser, agentKey, isAgent, fiat, currency } = this.props;
         if(agentKey && this.state.done) return <Redirect to="/" />;
         return (
             <div className="card p-3 mt-1">
@@ -74,7 +79,10 @@ class DomainNameForm extends Component {
                             <small>Enter the FQDN, for example: yahoo.com</small>
                         </Col>
                     </FormGroup>
-                    <PriceInput price={this.state.price} handlePriceChange={this.handlePriceChange} {...this.props} />
+                    <PriceInput price={this.state.price}
+                                fiatInput={this.state.fiatInput}
+                                activeInput={this.state.activeInput}
+                                handlePriceChange={this.handlePriceChange} />
                     <Button type="submit" color="success">create offer</Button>
                 </Form>
                 <PriceBreakdown price={this.state.price} agentKey={agentKey} />
