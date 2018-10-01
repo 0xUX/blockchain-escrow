@@ -7,7 +7,7 @@ import { USERS, ASSET_STATES, CURRENCIES, DISPLAY_ETHER_DECIMALS } from "../cons
 import { getPriceBreakdownInWei, getSalesPriceInEther } from '../lib/util';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 import { FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/actionTypes';
-import { setCurrency } from "../redux/actions";
+import { setCurrency, updateDomain } from "../redux/actions";
 import { DelayedSpinner, AmountPlusFiat } from './ui.js';
 
 
@@ -47,6 +47,41 @@ export const PriceBreakdown = ({ price, agentKey }) => {
             </div>
             );
 }
+
+export let DomainInput = props => {
+    const { domain, updateDomain } = props;
+
+    const handleChange = (e) => {
+        const value = e.target.value.trim();
+        props.updateDomain(value);
+    };
+
+    return (
+        <FormGroup row>
+            <Col sm={12}>
+                <Input name="domain" id="domain"
+                       placeholder="enter domain name"
+                       onChange={handleChange}
+                       value={props.domain}
+                />
+                <small>Enter a FQDN, for example: yahoo.com</small>
+            </Col>
+        </FormGroup>
+    );
+};
+
+DomainInput.propTypes = {
+    domain: PropTypes.string.isRequired,
+    updateDomain: PropTypes.func.isRequired
+};
+
+const mapStateToPropsDomain = state => {
+    return { domain: state.domain };
+};
+
+DomainInput = connect(
+    mapStateToPropsDomain, { updateDomain }
+)(DomainInput);
 
 
 export let PriceInput = props => {

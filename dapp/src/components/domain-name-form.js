@@ -2,27 +2,28 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import { Link, Redirect } from 'react-router-dom';
-import { Button, ButtonGroup, Form, FormGroup, Input, Col } from 'reactstrap';
+import { Button, Form, FormGroup, Col } from 'reactstrap';
 import { addAsset, setCurrency } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
 import { userIsAgent } from '../redux/selectors';
-import { ADD_ASSET, FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/actionTypes';
-import { PriceBreakdown, PriceInput } from './static';
+import { ADD_ASSET, FIAT_CALL_REQUEST, SET_CURRENCY, UPDATE_DOMAIN } from '../redux/actionTypes';
+import { PriceBreakdown, PriceInput, DomainInput } from './static';
 import { getPriceBreakdownInWei } from '../lib/util';
 
 
 class DomainNameForm extends Component {
     state = {
-        domain: '',
         price: '', // price in Ether (string)
         fiatInput: '',
         activeInput: null, // either eth or fiat, field we're typing in
-        done: false
+        done: false,
+        mode: null // either sell or buy
     }
 
     handleSubmit = (e) => {
         e.preventDefault();
-        const { currentUser, assets, addAsset, agentKey } = this.props;
+        const { currentUser, assets, addAsset, agentKey, domain, updateDomain } = this.props;
+        if(!this.state.price) return;
         const {netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(this.state.price, agentKey);
         const asset = {
             seller: currentUser,
@@ -34,8 +35,9 @@ class DomainNameForm extends Component {
             blocknumber: null,
             state: 'FORSALE'
         };
-        addAsset(this.state.domain, asset);
-        this.setState({ domain: '', price: '', done: true });
+        addAsset(domain, asset);
+        updateDomain('');
+        this.setState({ price: '', fiatInput: '', done: true });
     }
 
     handlePriceChange = (e) => {
@@ -56,39 +58,46 @@ class DomainNameForm extends Component {
         }
     }
 
-    handleChange = (e) => {
-        const name = e.target.name;
-        const value = e.target.value;
-        this.setState({ [name]:value });
+    isFQDN = () => {
+        // VERY loose check
+        const { domain } = this.props;
+        return /.+\..{2,}$/.test(domain);
     }
 
     render() {
-        const { currentUser, agentKey, isAgent, fiat, currency } = this.props;
-        if(agentKey && this.state.done) return <Redirect to="/" />;
+        const { currentUser, agentKey, isAgent, fiat, currency, domain, updateDomain } = this.props;
+        const { mode, done } = this.state;
+        if(agentKey && done) return <Redirect to="/" />;
+        if(mode === 'buy') return <Redirect to={`/domain/${domain}`} />;
         return (
             <div className="card p-3 mt-1">
-                <h3>Sell a domain name:</h3>
-                <Form  onSubmit={this.handleSubmit}>
-                    <FormGroup row>
-                        <Col sm={12}>
-                            <Input name="domain" id="domain"
-                                   placeholder="enter domain name"
-                                   onChange={this.handleChange}
-                                   value={this.state.domain}
-                            />
-                            <small>Enter the FQDN, for example: yahoo.com</small>
-                        </Col>
-                    </FormGroup>
-                    <PriceInput price={this.state.price}
-                                fiatInput={this.state.fiatInput}
-                                activeInput={this.state.activeInput}
-                                handlePriceChange={this.handlePriceChange} />
-                    <Button type="submit" color="success">create offer</Button>
-                </Form>
-                <PriceBreakdown price={this.state.price} agentKey={agentKey} />
-                {!agentKey && !isAgent &&
-                 <div className="mt-5"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
+                {(agentKey || mode === 'sell') && <h3>Sell a domain name:</h3>}
+            <Form  onSubmit={this.handleSubmit}>
+            <DomainInput />
+            {!mode && !agentKey &&
+             <FormGroup row>
+                 <Col sm={6} className="mt-3">
+                     <Button color="success" size="lg" onClick={() => this.setState({ mode: 'buy' }) } block disabled={!this.isFQDN()} >buy</Button>
+                 </Col>
+                 <Col sm={6} className="mt-3">
+                     <Button color="success" size="lg" onClick={() => this.setState({ mode: 'sell' }) } block disabled={!this.isFQDN()} >sell</Button>
+                 </Col>
+             </FormGroup>
+            }
+            {(agentKey || mode === 'sell') &&
+                 <div>
+                     <PriceInput price={this.state.price}
+                                 fiatInput={this.state.fiatInput}
+                                 activeInput={this.state.activeInput}
+                                 handlePriceChange={this.handlePriceChange} />
+                     <Button type="submit" color="success">create offer</Button>
+                     <PriceBreakdown price={this.state.price} agentKey={agentKey} />
+                 </div>
                 }
+            </Form>
+            {mode === 'sell' && !agentKey && !isAgent &&
+             <div className="mt-5"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
+            }
             </div>
         );
     }
@@ -102,19 +111,22 @@ DomainNameForm.propTypes = {
     currency: PropTypes.string.isRequired,
     setCurrency: PropTypes.func.isRequired,
     onRequestFiat: PropTypes.func.isRequired,
-    fiat: PropTypes.object.isRequired
+    fiat: PropTypes.object.isRequired,
+    domain: PropTypes.string.isRequired,
+    updateDomain: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => {
     const isAgent = userIsAgent(state);
-    return { currentUser: state.currentUser, isAgent, currency: state.currency, fiat: state.fiat };
+    return { currentUser: state.currentUser, isAgent, currency: state.currency, fiat: state.fiat, domain: state.domain };
 };
 
 const mapDispatchToProps = dispatch => {
     return {
         onRequestFiat: currency => dispatch({ type: FIAT_CALL_REQUEST, payload: {currency} }),
         addAsset: (assetName, asset) => dispatch({ type: ADD_ASSET, payload: {assetName, asset} }),
-        setCurrency: currency => dispatch({ type: SET_CURRENCY, payload: {currency} })
+        setCurrency: currency => dispatch({ type: SET_CURRENCY, payload: {currency} }),
+        updateDomain: domain => dispatch({ type: UPDATE_DOMAIN, payload: {domain} }),
     };
 };
 
