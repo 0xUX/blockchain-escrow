@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { BrowserRouter as Router, Route, Switch, Link, Redirect } from 'react-router-dom';
 import {hot} from "react-hot-loader";
 import Layout from './components/layout';
-import Home from './components/home'
+import Home from './components/home';
 import Domain from './components/domain';
 import { Agent, SellViaAgent } from './components/agent';
 import { NoMatch } from './components/static';

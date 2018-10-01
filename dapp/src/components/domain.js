@@ -3,12 +3,13 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { connect } from "react-redux";
 import { Button, Form, FormGroup, Input } from 'reactstrap';
-import Balance from './balance';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
-import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE } from '../constants';
-import { AssetInfo } from './static';
-import { getSalesPrice, getPriceBreakdown } from '../lib/util';
+import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
+import { AssetInfo, PriceInput, PriceBreakdown } from './static';
+import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei } from '../lib/util';
+import { AmountPlusFiat } from './ui.js';
+import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 const NotForSale = props => (
     <div className="card p-3 mt-1">
@@ -18,18 +19,18 @@ const NotForSale = props => (
 
 class Domain extends Component {
     render() {
-        const { match, currentUser, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance } = this.props;
+        const { match, currentUser, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance, fiat } = this.props;
         const { domain } = match.params;
         const header = <h1>{ASSET_STATES[asset.state]}: <a href={`https://whois.domaintools.com/${domain}`} target="_blank">{domain}</a></h1>;
         if(asset.state === 'NOTFORSALE') return <div>{header}<NotForSale domain={domain} /></div>;
-        const cost = getSalesPrice(asset);
+        const cost = getSalesPriceInEther(asset);
         return (
             <div>
                 {header}
-                {cost > 0 && <h2>{cost} Ether</h2>}
+                {cost > 0 && <h2><AmountPlusFiat amountInEther={cost} /></h2>}
                 {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
                 {role === 'seller' &&
-                 <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} />
+                 <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} fiat={fiat} />
                 }
                 {role === 'prospect' &&
                  <ProspectActions currentUser={currentUser} asset={asset} domain={domain} balance={balance} updateAssetState={updateAssetState} updateBalance={updateBalance} />
@@ -40,7 +41,6 @@ class Domain extends Component {
                 {role === 'agent' &&
                  <AgentActions asset={asset} domain={domain} updateAssetState={updateAssetState} removeAsset={removeAsset} updateBalance={updateBalance} />
                 }
-                <Balance />
             </div>
         );
     }
@@ -50,18 +50,19 @@ Domain.propTypes = {
     currentUser: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     role: PropTypes.string,
-    balance: PropTypes.number.isRequired,
+    balance: PropTypes.string.isRequired,
     updateAssetPrice: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired,
     removeAsset: PropTypes.func.isRequired,
-    updateBalance: PropTypes.func.isRequired
+    updateBalance: PropTypes.func.isRequired,
+    fiat: PropTypes.object.isRequired
 };
 
 class ProspectActions extends Component {
 
     buy = () => {
         const { currentUser, balance, asset, updateBalance, updateAssetState, domain } = this.props;
-        const cost = Number(asset.price) + Number(asset.escrowfee) + Number(asset.handlingfee);
+        const cost = getSalesPriceInWei(asset);
 
         // assume the transaction has exactly the value needed to pay
         const value = Math.max(cost - balance, 0);
@@ -79,19 +80,18 @@ class ProspectActions extends Component {
 
     render() {
         const { balance, asset } = this.props;
-        const cost = Number(asset.price) + Number(asset.escrowfee) + Number(asset.handlingfee);
-        const required = cost - balance;
+        const cost = getSalesPriceInWei(asset);
+        const required = web3utils.toBN(String(cost)).sub(web3utils.toBN(String(balance))).toString(10);
         return (
             <div className="card p-3 mt-1">
                 {asset.state === 'FORSALE' ?
                  <div>
                      <p>Buy this domain:</p>
                      <ul>
-                         <li>Domain price: {cost}</li>
-                         <li>Current balance: {balance}</li>
-                         {required > 0 && <li>Additional Ether required: {required}</li>}
+                         <li>Domain price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(cost))} /></li>
+                         <li>Current balance: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(balance))} /></li>
+                         {Number(required) > 0 && <li>Additional Ether required: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(required))} /></li>}
                      </ul>
-                     {required > 0 && <p>You can either top up your balance first, or pay the difference in the transaction.</p>}
                      <div><Button color="success" onClick={this.buy}>buy</Button></div>
                  </div> :
                  <p>This domain is sold.</p>
@@ -105,7 +105,7 @@ ProspectActions.propTypes = {
     currentUser: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
-    balance: PropTypes.number.isRequired,
+    balance: PropTypes.string.isRequired,
     updateBalance: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired
 };
@@ -211,21 +211,37 @@ AgentActions.propTypes = {
 
 class SellerActions extends Component {
     state = {
-        price: this.props.asset.price
+        price: web3utils.fromWei(this.props.asset.price),
+        fiatInput: '',
+        activeInput: null // either eth or fiat, field we're typing in
     }
 
     updatePrice = (e) => {
         e.preventDefault();
         const { asset, domain, updateAssetPrice } = this.props;
         const price = this.state.price;
-        const { escrowfee, handlingfee } = getPriceBreakdown(price, asset.agent);
-        updateAssetPrice(domain, price, escrowfee, handlingfee);
+        const { netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(price, asset.agent);
+        updateAssetPrice(domain, netPrice, escrowfee, handlingfee);
     }
 
-    handleChange = (e) => {
+    handlePriceChange = (e) => {
+        const { fiat } = this.props;
+        const precision = 10 ** INPUT_ETHER_DECIMALS;
+        const name = e.target.name;
         const value = e.target.value;
-        this.setState({ price: value });
+        if(name === 'price') { // typing in ETH input
+            if(value && !/^[0-9]{1,7}\.?[0-9]{0,18}$/.test(value)) return;
+            const fiatValue = String(Math.round(value * fiat.fiat * 100) / 100);
+            this.setState({ activeInput: 'eth', price: value, fiatInput: fiatValue });
+        } else if (name === 'fiat') { // typing in fiat input
+            if(fiat.fiat !== null) {
+                if(value && !/^[0-9]{1,10}\.?[0-9]{0,2}$/.test(value)) return;
+                const ethValue = String(Math.round(value / fiat.fiat * precision) / precision);
+                this.setState({ activeInput: 'fiat', price: ethValue, fiatInput: value });
+            }
+        }
     }
+
 
     retractOffer = () => {
         const { domain, removeAsset } = this.props;
@@ -243,16 +259,14 @@ class SellerActions extends Component {
                 }
                 {asset.state === 'FORSALE' &&
                  <div>
-                     <Form inline onSubmit={this.updatePrice}>
-                         <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
-                             <Input name="price"
-                                    placeholder="enter amount in Ether"
-                                    onChange={this.handleChange}
-                                    value={this.state.price}
-                             />
-                         </FormGroup>
+                     <Form onSubmit={this.updatePrice}>
+                         <PriceInput price={this.state.price}
+                                     fiatInput={this.state.fiatInput}
+                                     activeInput={this.state.activeInput}
+                                     handlePriceChange={this.handlePriceChange} />
                          <Button type="submit">update price</Button>
                      </Form>
+                     <PriceBreakdown price={this.state.price} agentKey={asset.agent} />
                      <Button className="mt-3" color="danger" onClick={this.retractOffer}>retract offer</Button>
                  </div>
                 }
@@ -265,7 +279,8 @@ SellerActions.propTypes = {
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
     updateAssetPrice: PropTypes.func.isRequired,
-    removeAsset: PropTypes.func.isRequired
+    removeAsset: PropTypes.func.isRequired,
+    fiat: PropTypes.object.isRequired
 };
 
 const mapStateToProps = (state, props) => {
@@ -273,7 +288,7 @@ const mapStateToProps = (state, props) => {
     const asset = getAsset(state, domain);
     const role = getRole(state, domain);
     const balance = getUserBalance(state);
-    return { currentUser: state.currentUser, asset, role, balance };
+    return { currentUser: state.currentUser, asset, role, balance, fiat: state.fiat };
 };
 
 export default connect(

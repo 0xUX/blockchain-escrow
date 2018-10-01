@@ -20,3 +20,8 @@ export const ASSET_STATES = {
 };
 
 export const HANDLING_FEE = 5; // promilage
+
+export const CURRENCIES = ['AUD', 'CNY', 'EUR', 'GBP', 'JPY', 'USD'];
+
+export const DISPLAY_ETHER_DECIMALS = 3;
+export const INPUT_ETHER_DECIMALS = 18;
