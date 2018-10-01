@@ -37,7 +37,7 @@ class DomainNameForm extends Component {
         };
         addAsset(domain, asset);
         updateDomain('');
-        this.setState({ price: '', fiatInput: '', done: true });
+        this.setState({ price: '', fiatInput: '', done: true, mode: null });
     }
 
     handlePriceChange = (e) => {
