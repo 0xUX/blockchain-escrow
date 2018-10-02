@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { Link, NavLink as RouterNavLink, withRouter } from 'react-router-dom';
 import { Container, Button, Navbar, NavbarBrand, NavItem, Nav } from 'reactstrap';
 //import { Collapse, NavbarToggler, Nav, NavItem, NavLink } from 'reactstrap';
@@ -103,6 +103,4 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
-export default withRouter(connect(
-    mapStateToProps, mapDispatchToProps
-)(Layout));
+export default withRouter(drizzleConnect(Layout, mapStateToProps, mapDispatchToProps));

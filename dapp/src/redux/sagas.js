@@ -1,8 +1,9 @@
-import { takeLatest, call, put } from "redux-saga/effects";
+import { takeLatest, call, put, all, fork } from "redux-saga/effects";
+import { drizzleSagas } from 'drizzle';
 import axios from "axios";
 
 // watcher saga: watches for actions dispatched to the store, starts worker saga
-export function* watcherSaga() {
+function* watcherSaga() {
     yield takeLatest("FIAT_CALL_REQUEST", workerSaga);
 }
 
@@ -33,4 +34,13 @@ function* workerSaga(action) {
         // dispatch a failure action to the store with the error
         yield put({ type: "FIAT_CALL_FAILURE", error });
     }
+}
+
+// drizzle sagas
+export default function* rootSaga() {
+    // add the watcherSaga
+    drizzleSagas.push(watcherSaga);
+    yield all(
+        drizzleSagas.map(saga => fork(saga))
+    );
 }

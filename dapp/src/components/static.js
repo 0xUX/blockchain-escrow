@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from 'prop-types';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { Link } from 'react-router-dom';
 import { Button, ButtonGroup, Form, FormGroup, Input, Col } from 'reactstrap';
 import { USERS, ASSET_STATES, CURRENCIES, DISPLAY_ETHER_DECIMALS } from "../constants";
@@ -44,8 +44,8 @@ export const PriceBreakdown = ({ price, agentKey }) => {
             Escrow fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(escrowfee))} /><br />
             Handling fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(handlingfee))} /><br />
             Sales price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(salesPrice))} />
-            </div>
-            );
+        </div>
+    );
 }
 
 export let DomainInput = props => {
@@ -79,9 +79,7 @@ const mapStateToPropsDomain = state => {
     return { domain: state.domain };
 };
 
-DomainInput = connect(
-    mapStateToPropsDomain, { updateDomain }
-)(DomainInput);
+DomainInput = drizzleConnect(DomainInput, mapStateToPropsDomain, { updateDomain });
 
 
 export let PriceInput = props => {
@@ -141,9 +139,7 @@ const mapStateToProps = state => {
     return { currency: state.currency, fiat: state.fiat };
 };
 
-PriceInput = connect(
-    mapStateToProps, { setCurrency }
-)(PriceInput);
+PriceInput = drizzleConnect(PriceInput, mapStateToProps, { setCurrency });
 
 export let CurrencySelector = props => {
     const { currency, setCurrency, onRequestFiat, fiat } = props;
@@ -179,6 +175,4 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
-CurrencySelector = connect(
-    mapStateToProps, mapDispatchToProps
-)(CurrencySelector);
+CurrencySelector = drizzleConnect(CurrencySelector, mapStateToProps, mapDispatchToProps);

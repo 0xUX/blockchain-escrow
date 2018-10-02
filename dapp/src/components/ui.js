@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { Alert } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatAmount } from '../lib/util';
@@ -35,9 +35,7 @@ const mapStateToProps = state => {
     return { currency: state.currency, fiat: state.fiat };
 };
 
-AmountPlusFiat = connect(
-    mapStateToProps
-)(AmountPlusFiat);
+AmountPlusFiat = drizzleConnect(AmountPlusFiat, mapStateToProps);
 
 
 export const DelayedSpinner = ({ wait }) => {

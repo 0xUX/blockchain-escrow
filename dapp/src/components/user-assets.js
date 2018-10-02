@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import _ from 'lodash-es';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { Link } from 'react-router-dom';
 import { getUserAssets, getAgentAssets } from '../redux/selectors';
 import { AssetInfo } from './static';
@@ -49,6 +49,4 @@ const mapStateToProps = state => {
     return { currentUser: state.currentUser, userAssets, agentAssets };
 };
 
-export default connect(
-    mapStateToProps
-)(UserAssets);
+export default drizzleConnect(UserAssets, mapStateToProps);

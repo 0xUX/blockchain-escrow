@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { Link, Redirect } from 'react-router-dom';
 import { Button, Form, FormGroup, Col } from 'reactstrap';
 import { addAsset, setCurrency } from '../redux/actions';
@@ -72,32 +72,32 @@ class DomainNameForm extends Component {
         return (
             <div className="card p-3 mt-1">
                 {(agentKey || mode === 'sell') && <h3>Sell a domain name:</h3>}
-            <Form  onSubmit={this.handleSubmit}>
-            <DomainInput />
-            {!mode && !agentKey &&
-             <FormGroup row>
-                 <Col sm={6} className="mt-3">
-                     <Button color="success" size="lg" onClick={() => this.setState({ mode: 'buy' }) } block disabled={!this.isFQDN()} >buy</Button>
-                 </Col>
-                 <Col sm={6} className="mt-3">
-                     <Button color="success" size="lg" onClick={() => this.setState({ mode: 'sell' }) } block disabled={!this.isFQDN()} >sell</Button>
-                 </Col>
-             </FormGroup>
-            }
-            {(agentKey || mode === 'sell') &&
-                 <div>
-                     <PriceInput price={this.state.price}
-                                 fiatInput={this.state.fiatInput}
-                                 activeInput={this.state.activeInput}
-                                 handlePriceChange={this.handlePriceChange} />
-                     <Button type="submit" color="success">create offer</Button>
-                     <PriceBreakdown price={this.state.price} agentKey={agentKey} />
-                 </div>
+                <Form  onSubmit={this.handleSubmit}>
+                    <DomainInput />
+                    {!mode && !agentKey &&
+                     <FormGroup row>
+                         <Col sm={6} className="mt-3">
+                             <Button color="success" size="lg" onClick={() => this.setState({ mode: 'buy' }) } block disabled={!this.isFQDN()} >buy</Button>
+                         </Col>
+                         <Col sm={6} className="mt-3">
+                             <Button color="success" size="lg" onClick={() => this.setState({ mode: 'sell' }) } block disabled={!this.isFQDN()} >sell</Button>
+                         </Col>
+                     </FormGroup>
+                    }
+                    {(agentKey || mode === 'sell') &&
+                     <div>
+                         <PriceInput price={this.state.price}
+                                     fiatInput={this.state.fiatInput}
+                                     activeInput={this.state.activeInput}
+                                     handlePriceChange={this.handlePriceChange} />
+                         <Button type="submit" color="success">create offer</Button>
+                         <PriceBreakdown price={this.state.price} agentKey={agentKey} />
+                     </div>
+                    }
+                </Form>
+                {mode === 'sell' && !agentKey && !isAgent &&
+                 <div className="mt-5"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
                 }
-            </Form>
-            {mode === 'sell' && !agentKey && !isAgent &&
-             <div className="mt-5"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
-            }
             </div>
         );
     }
@@ -130,6 +130,4 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
-export default connect(
-    mapStateToProps, mapDispatchToProps
-)(DomainNameForm);
+export default drizzleConnect(DomainNameForm, mapStateToProps, mapDispatchToProps);

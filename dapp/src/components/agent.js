@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { Link, Redirect } from 'react-router-dom';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { USERS } from "../constants";
 import UserAssets from './user-assets';
 import DomainNameForm from './domain-name-form';
@@ -65,10 +65,6 @@ const mapStateToProps = state => {
     return { currentUser: state.currentUser, isAgent };
 };
 
-Agent = connect(
-    mapStateToProps
-)(Agent);
+Agent = drizzleConnect(Agent, mapStateToProps);
 
-SellViaAgent = connect(
-    mapStateToProps
-)(SellViaAgent);
+SellViaAgent = drizzleConnect(SellViaAgent, mapStateToProps);

@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateBalance } from '../redux/actions';
 import { getUserBalance } from '../redux/selectors';
@@ -41,7 +41,4 @@ const mapStateToProps = state => {
     return { currentUser: state.currentUser, balance, fiat: state.fiat, currency: state.currency };
 };
 
-export default connect(
-    mapStateToProps,
-    { updateBalance }
-)(Balance);
+export default drizzleConnect(Balance, mapStateToProps, { updateBalance });

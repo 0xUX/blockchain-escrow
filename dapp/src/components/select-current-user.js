@@ -1,13 +1,13 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { Button, ButtonGroup } from 'reactstrap';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import { withRouter } from 'react-router-dom';
 import { setCurrentUser } from "../redux/actions";
 import { getRole } from '../redux/selectors';
 import { USERS } from "../constants";
 
-class SelectCurrentUser extends Component {    
+class SelectCurrentUser extends Component {
     render() {
         const { currentUser, setCurrentUser, role } = this.props;
         return (
@@ -47,7 +47,4 @@ const mapStateToProps = (state, props) => {
     return { currentUser: state.currentUser, role };
 };
 
-export default withRouter(connect(
-    mapStateToProps,
-    { setCurrentUser }
-)(SelectCurrentUser));
+export default withRouter(drizzleConnect(SelectCurrentUser, mapStateToProps, { setCurrentUser }));

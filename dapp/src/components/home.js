@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { connect } from "react-redux";
+import { drizzleConnect } from 'drizzle-react';
 import DomainNameForm from './domain-name-form';
 import UserAssets from './user-assets';
 import { AgentLink } from './static';
@@ -29,6 +29,4 @@ const mapStateToProps = state => {
     return { currentUser: state.currentUser, isAgent };
 };
 
-export default connect(
-    mapStateToProps
-)(Home);
+export default drizzleConnect(Home, mapStateToProps);
