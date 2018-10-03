@@ -14,7 +14,7 @@ export const AGENT_FEES = {
 
 export const ASSET_STATES = {
     FORSALE: 'For sale',
-    PAID: 'Paid to escrow',
+    PAID: 'Paid (in escrow)',
     RELEASED: 'Sold',
     NOTFORSALE: 'Not for sale'
 };

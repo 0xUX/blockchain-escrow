@@ -6,7 +6,7 @@ import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
-import { AssetInfo, PriceInput, PriceBreakdown } from './static';
+import { AssetInfo, PriceInput, PriceBreakdown, CurrencySelector } from './static';
 import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei } from '../lib/util';
 import { AmountPlusFiat } from './ui.js';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
@@ -27,7 +27,7 @@ class Domain extends Component {
         return (
             <div>
                 {header}
-                {cost > 0 && <h2><AmountPlusFiat amountInEther={cost} /></h2>}
+                {cost > 0 && <div><h4><AmountPlusFiat amountInEther={cost} /></h4> <CurrencySelector /></div>}
                 {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
                 {role === 'seller' &&
                  <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} fiat={fiat} />
