@@ -89,16 +89,12 @@ describe('Escrow', () => {
         const used = INITBAL-(ownerBalEnd-ownerBalStart);       // used in the exit() call
         assert.ok(used < web3.utils.toWei('0.001', 'ether'), "owner did not get contract balance upon exit()");
     });
-//     it('after selfdestruct contact should not be active', async () => {
-//         const tx = await contract.methods.exit().send({ from: owner });
-//         try {
-//             // try to add some funds after exit() - should fail
-//             await contract.methods.fund().send({ from: buyer, value: INITBAL });
-//             assert.fail() // should not be reached
-//         } catch (error) {
-//             assert.ok(/revert/.test(error.message), "could fund() after exit()");
-//         }
-//     });
+    it('after selfdestruct contact should not be active', async () => {
+        const tx = await contract.methods.exit().send({ from: owner });
+        const code = await web3.eth.getCode(contract.options.address);
+//         console.log("contract code address:", code);
+        assert.strictEqual(code, "0x0", "contract still live after exit()");
+    });
     it('only owner can set fee wallet', async () => {
         await contract.methods.setWallet(walletacct).send({ from: owner });
         try {
