@@ -14,8 +14,8 @@ const web3 = new Web3(provider);
 const deploy = async () => {
     const contractFee = 5;
     accounts = await web3.eth.getAccounts();
-//     console.log('Interface', compiledContract.interface);
-    console.log('Deploying from', accounts[0]);
+    console.log('Deploying on Rinkeby from', accounts[0]);
+    console.log('Monitor progress:', 'https://rinkeby.etherscan.io/address/'+accounts[0]);
 
 //     var contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface));
 //     var contractData = contract.new.getData(contractFee, {data: '0x'+compiledContract.bytecode});
@@ -25,8 +25,9 @@ const deploy = async () => {
     const contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface))
         .deploy({ data: '0x'+compiledContract.bytecode, arguments: [contractFee] })
         .send({ from: accounts[0], gas: '2000000', gasPrice: web3.utils.toWei('2', 'gwei') });
+    console.log('Deployed!');
+//     console.log(contract);
     console.log('Deployed to', contract.options.address);
-    console.log(contract);
 };
 
 deploy();
