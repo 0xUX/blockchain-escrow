@@ -6,7 +6,7 @@ const balances = (state = initialState, action) => {
   switch (action.type) {
     case UPDATE_BALANCE: {
       const { address, balance } = action.payload;
-      return {          
+      return {
           ...state,
           [address]: balance
       };

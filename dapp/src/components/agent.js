@@ -1,27 +1,30 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import { connect } from "react-redux";
 import { USERS } from "../constants";
-import Balance from './balance';
+import UserAssets from './user-assets';
+import DomainNameForm from './domain-name-form';
+import { userIsAgent } from '../redux/selectors';
 
 export class Agent extends Component {
     render() {
-        const { currentUser } = this.props;
-        const isAgent = currentUser.indexOf('AGENT') === 0;
+        const { currentUser, isAgent } = this.props;
         return (
             <div>
                 <h1>Agents</h1>
-                {isAgent && <Balance /> }
+                {isAgent && <UserAssets agentView /> }
                 {!isAgent &&
                  <div>
-                     <p>Intro into agents blah blah</p>
+                     <p>Intro into agents: why make use of an escrow agent etc.</p>
+                     <p>Want to become an agent? Drop us an email!</p>
+                     <p>Our top recommended agents:</p>
                      <ul>
                          {Object.keys(USERS).map(userKey => {
                               const user = USERS[userKey];
-                              if(userKey.indexOf('AGENT') === 0) { 
+                              if(userKey.indexOf('AGENT') === 0) {
                                   return (
-                                      <li key={user}><Link to={`/agent/${user}`}>{user}</Link></li>
+                                      <li key={user}><Link to={`/agent/${userKey}`}>{user}</Link></li>
                                   );
                               }
                          })}
@@ -34,27 +37,32 @@ export class Agent extends Component {
 };
 
 Agent.propTypes = {
-    currentUser: PropTypes.string.isRequired
+    currentUser: PropTypes.string.isRequired,
+    isAgent: PropTypes.bool.isRequired
 };
 
 export class SellViaAgent extends Component {
     render() {
         const { currentUser, match } = this.props;
-        const { agentId } = match.params;
+        const { agentKey } = match.params;
+        if(currentUser === agentKey) return <Redirect to="/agent" />;
         return (
             <div>
-                <h1>{agentId}</h1>
-            </div>            
+                <h1>{USERS[agentKey]}</h1>
+                <DomainNameForm agentKey={agentKey} />
+            </div>
         );
-    }    
+    }
 }
 
 SellViaAgent.propTypes = {
-    currentUser: PropTypes.string.isRequired
+    currentUser: PropTypes.string.isRequired,
+    isAgent: PropTypes.bool.isRequired
 };
 
 const mapStateToProps = state => {
-    return { currentUser: state.currentUser };
+    const isAgent = userIsAgent(state);
+    return { currentUser: state.currentUser, isAgent };
 };
 
 Agent = connect(
@@ -64,4 +72,3 @@ Agent = connect(
 SellViaAgent = connect(
     mapStateToProps
 )(SellViaAgent);
-
