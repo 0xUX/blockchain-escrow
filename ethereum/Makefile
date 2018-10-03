@@ -1,8 +1,7 @@
 hi:
-	echo "make {tests,compile,deploy}"
+	echo "make {tests,compile,deploy,clean}"
 
 tests: build/Escrow.json
-#	nvm use 10
 	npm run test
 
 deploy: build/Escrow.json build/Escrow.abi.json
@@ -13,6 +12,8 @@ build/Escrow.json build/Escrow.abi.json: contracts/escrow.sol
 
 compile: build/Escrow.json build/Escrow.abi.json
 
+clean:
+	/bin/rm -rf ./build
 
 # export NVM_DIR="/Users/stan/.nvm"
 # [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
