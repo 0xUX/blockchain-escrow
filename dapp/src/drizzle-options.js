@@ -3,7 +3,7 @@ import Web3 from 'web3';
 
 const web3 = new Web3(window.web3);
 
-const ADDRESS = '0x8D3bE215DCf9905cBe3F65f15a8F3DDAc85c1A5A';
+const ADDRESS = '0x5c9dA64E47aa04779c820C87cae2a4Df1d535492';
 
 const drizzleOptions = {
     web3: {
