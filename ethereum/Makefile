@@ -4,7 +4,7 @@ hi:
 tests: build/Escrow.json
 	npm run test
 
-deploy: build/Escrow.json build/Escrow.abi.json
+deploy: build/Escrow.json build/Escrow.abi.json rinkeby-keys.json
 	node deploy.js
 
 build/Escrow.json build/Escrow.abi.json: contracts/escrow.sol
