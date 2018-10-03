@@ -99,8 +99,8 @@ contract Escrow {
         revert("use fund() to fund your escrow account");
     }
 
-    /// kill this contract, send any funds left to owner
-    /// note this is not sent to the handling_wallet
+    /// kill this contract, send any funds left to owner (!)
+    /// note: this is not sent to the handling_wallet
     /// 
     function exit() external ownerOnly {
         selfdestruct(contract_owner);
