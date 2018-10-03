@@ -88,7 +88,7 @@ export let PriceInput = props => {
     if(activeInput === 'fiat') {
         fiatValue = fiatInput;
         const precision = 10 ** DISPLAY_ETHER_DECIMALS;
-        ethValue = String(Math.round(price * precision) / precision);
+        ethValue = String(Math.round(fiatValue / fiat.fiat * precision) / precision);
         if(ethValue === '0') ethValue = '';
     } else { // either 'eth' or null
         fiatValue = String(Math.round(price * fiat.fiat * 100) / 100);
