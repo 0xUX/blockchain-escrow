@@ -1,4 +1,4 @@
-import { FIAT_CALL_REQUEST, FIAT_CALL_SUCCESS, FIAT_CALL_FAILURE } from '../actionTypes';
+import { FIAT_CALL_REQUEST, FIAT_CALL_SUCCESS, FIAT_CALL_FAILURE } from '../action-types';
 
 const initialState = {
     fetching: false,

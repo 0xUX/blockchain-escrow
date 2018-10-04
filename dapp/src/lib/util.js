@@ -13,7 +13,6 @@ export const getPriceBreakdownInWei = (priceInEther, agentKey) => {
 
 export const getPriceBreakdownInEther = (priceInEther, agentKey) => {
     if(typeof priceInEther !== 'number') console.warn('priceInEther must be a number. Only use BN or strings for high precision calc.');
-    const precision = 10 ** DISPLAY_ETHER_DECIMALS;
     if(!priceInEther) priceInEther = 0;
     const escrowfee = agentKey ? priceInEther / 1000 * AGENT_FEES[agentKey] : 0;
     const handlingfee = priceInEther / 1000 * HANDLING_FEE;
@@ -35,11 +34,15 @@ export const getSalesPriceInEther = (asset) => {
 
 export const formatAmount = (currency, amount) => {
     if(typeof amount !== 'number') console.warn('Amount must be a number. Only use BN or strings for high precision calc.');
-    const precision = 10 ** DISPLAY_ETHER_DECIMALS;
-    if(currency === null) return String(Math.round(amount * precision) / precision);
-    if(currency === 'eth') return '\u039E ' + Math.round(amount * precision) / precision;
+    if(currency === null) return String(precisionRound(amount, DISPLAY_ETHER_DECIMALS));
+    if(currency === 'eth') return '\u039E ' + String(precisionRound(amount, DISPLAY_ETHER_DECIMALS));
     // Fiat below
     let locale = navigator.language || 'en-US';
     if(!Intl) return currency + ' ' + amount.toFixed(2);
     return new Intl.NumberFormat(locale, { style: 'currency', currency: currency }).format(amount);
+};
+
+export const precisionRound = (number, precision) => {
+    const factor = Math.pow(10, precision);
+    return Math.round(number * factor) / factor;
 };

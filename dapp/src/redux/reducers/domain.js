@@ -1,4 +1,4 @@
-import { UPDATE_DOMAIN } from '../actionTypes';
+import { UPDATE_DOMAIN } from '../action-types';
 
 const initialState = '';
 

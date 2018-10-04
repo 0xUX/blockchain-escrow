@@ -3,15 +3,21 @@ import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Link, Redirect } from 'react-router-dom';
 import { Button, Form, FormGroup, Col } from 'reactstrap';
-import { addAsset, setCurrency } from '../redux/actions';
+import { setCurrency } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
 import { userIsAgent } from '../redux/selectors';
-import { ADD_ASSET, FIAT_CALL_REQUEST, SET_CURRENCY, UPDATE_DOMAIN } from '../redux/actionTypes';
+import { FIAT_CALL_REQUEST, SET_CURRENCY, UPDATE_DOMAIN } from '../redux/action-types';
 import { PriceBreakdown, PriceInput, DomainInput } from './static';
-import { getPriceBreakdownInWei } from '../lib/util';
+import { getPriceBreakdownInWei, precisionRound } from '../lib/util';
 
 
 class DomainNameForm extends Component {
+    constructor(props, context) {
+        super(props);
+        this.contracts = context.drizzle.contracts;
+        this.web3 = context.drizzle.web3;
+    }
+
     state = {
         price: '', // price in Ether (string)
         fiatInput: '',
@@ -22,37 +28,34 @@ class DomainNameForm extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        const { currentUser, assets, addAsset, agentKey, domain, updateDomain } = this.props;
-        if(!this.state.price) return;
-        const {netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(this.state.price, agentKey);
-        const asset = {
-            seller: currentUser,
-            price: netPrice,
-            escrowfee: escrowfee,
-            handlingfee: handlingfee,
-            agent: agentKey || null,
-            buyer: null,
-            blocknumber: null,
-            state: 'FORSALE'
-        };
-        addAsset(domain, asset);
+        const { account, agentKey, domain, updateDomain } = this.props; // @@@ agentKey waarvandaan?
+        if(!this.state.price || !domain) return;
+        if(!agentKey) {
+            const StackId = this.contracts.Escrow.methods.offerDirect.cacheSend(domain, this.web3.utils.toWei(this.state.price), {from: account});
+            // // Use the dataKey to display the transaction status.
+            // if (state.transactionStack[stackId]) {
+            //     const txHash = state.transactionStack[stackId]
+
+            //     return state.transactions[txHash].status
+            // }
+        }
+
         updateDomain('');
         this.setState({ price: '', fiatInput: '', done: true, mode: null });
     }
 
     handlePriceChange = (e) => {
         const { fiat } = this.props;
-        const precision = 10 ** INPUT_ETHER_DECIMALS;
         const name = e.target.name;
         const value = e.target.value;
         if(name === 'price') { // typing in ETH input
             if(value && !/^[0-9]{1,7}\.?[0-9]{0,18}$/.test(value)) return;
-            const fiatValue = String(Math.round(value * fiat.fiat * 100) / 100);
+            const fiatValue = String(precisionRound(value * fiat.fiat, 2));
             this.setState({ activeInput: 'eth', price: value, fiatInput: fiatValue });
         } else if (name === 'fiat') { // typing in fiat input
             if(fiat.fiat !== null) {
                 if(value && !/^[0-9]{1,10}\.?[0-9]{0,2}$/.test(value)) return;
-                const ethValue = String(Math.round(value / fiat.fiat * precision) / precision);
+                const ethValue = String(precisionRound(value / fiat.fiat, INPUT_ETHER_DECIMALS));
                 this.setState({ activeInput: 'fiat', price: ethValue, fiatInput: value });
             }
         }
@@ -65,7 +68,7 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { currentUser, agentKey, isAgent, fiat, currency, domain, updateDomain } = this.props;
+        const { agentKey, isAgent, fiat, currency, domain, updateDomain } = this.props; // @@@ agentKey en isAgent
         const { mode, done } = this.state;
         if(agentKey && done) return <Redirect to="/" />;
         if(mode === 'buy') return <Redirect to={`/domain/${domain}`} />;
@@ -103,28 +106,39 @@ class DomainNameForm extends Component {
     }
 };
 
+DomainNameForm.contextTypes = {
+    drizzle: PropTypes.object
+};
+
 DomainNameForm.propTypes = {
-    currentUser: PropTypes.string.isRequired,
-    addAsset: PropTypes.func.isRequired,
-    isAgent: PropTypes.bool.isRequired,
-    agentKey: PropTypes.string,
+    account: PropTypes.string.isRequired,
+    //addAsset: PropTypes.func.isRequired, // @@@
+    isAgent: PropTypes.bool.isRequired, // @@@
+    agentKey: PropTypes.string, // @@@
     currency: PropTypes.string.isRequired,
     setCurrency: PropTypes.func.isRequired,
     onRequestFiat: PropTypes.func.isRequired,
     fiat: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
-    updateDomain: PropTypes.func.isRequired
+    updateDomain: PropTypes.func.isRequired,
+    Escrow: PropTypes.object.isRequired
 };
 
 const mapStateToProps = state => {
-    const isAgent = userIsAgent(state);
-    return { currentUser: state.currentUser, isAgent, currency: state.currency, fiat: state.fiat, domain: state.domain };
+    const isAgent = false; // userIsAgent(state); // @@@
+    return { account: state.accounts[0],
+             isAgent,  // @@@
+             currency: state.currency,
+             fiat: state.fiat,
+             domain: state.domain,
+             Escrow: state.contracts.Escrow,
+           };
 };
 
 const mapDispatchToProps = dispatch => {
     return {
         onRequestFiat: currency => dispatch({ type: FIAT_CALL_REQUEST, payload: {currency} }),
-        addAsset: (assetName, asset) => dispatch({ type: ADD_ASSET, payload: {assetName, asset} }),
+       // addAsset: (assetName, asset) => dispatch({ type: ADD_ASSET, payload: {assetName, asset} }), // @@@
         setCurrency: currency => dispatch({ type: SET_CURRENCY, payload: {currency} }),
         updateDomain: domain => dispatch({ type: UPDATE_DOMAIN, payload: {domain} }),
     };

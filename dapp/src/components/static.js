@@ -4,9 +4,9 @@ import { drizzleConnect } from 'drizzle-react';
 import { Link } from 'react-router-dom';
 import { Button, ButtonGroup, Form, FormGroup, Input, Col } from 'reactstrap';
 import { USERS, ASSET_STATES, CURRENCIES, DISPLAY_ETHER_DECIMALS } from "../constants";
-import { getPriceBreakdownInWei, getSalesPriceInEther } from '../lib/util';
+import { getPriceBreakdownInWei, getSalesPriceInEther, precisionRound } from '../lib/util';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
-import { FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/actionTypes';
+import { FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/action-types';
 import { setCurrency, updateDomain } from "../redux/actions";
 import { DelayedSpinner, AmountPlusFiat } from './ui.js';
 
@@ -87,11 +87,10 @@ export let PriceInput = props => {
     let fiatValue, ethValue;
     if(activeInput === 'fiat') {
         fiatValue = fiatInput;
-        const precision = 10 ** DISPLAY_ETHER_DECIMALS;
-        ethValue = String(Math.round(fiatValue / fiat.fiat * precision) / precision);
+        ethValue = String(precisionRound(fiatValue / fiat.fiat, DISPLAY_ETHER_DECIMALS));
         if(ethValue === '0') ethValue = '';
     } else { // either 'eth' or null
-        fiatValue = String(Math.round(price * fiat.fiat * 100) / 100);
+        fiatValue = String(precisionRound(price * fiat.fiat, 2));
         ethValue = price;
         if(fiatValue === '0') fiatValue = '';
     }

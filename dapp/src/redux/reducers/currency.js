@@ -1,4 +1,4 @@
-import { SET_CURRENCY } from '../actionTypes';
+import { SET_CURRENCY } from '../action-types';
 import { CURRENCIES } from "../../constants";
 
 const initialState = 'USD';

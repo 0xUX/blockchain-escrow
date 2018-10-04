@@ -1,4 +1,4 @@
-import { UPDATE_BALANCE } from '../actionTypes';
+import { UPDATE_BALANCE } from '../action-types';
 
 const initialState = {};
 

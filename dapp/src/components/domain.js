@@ -7,7 +7,7 @@ import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
 import { AssetInfo, PriceInput, PriceBreakdown, CurrencySelector } from './static';
-import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei } from '../lib/util';
+import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei, precisionRound } from '../lib/util';
 import { AmountPlusFiat } from './ui.js';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 
@@ -226,17 +226,16 @@ class SellerActions extends Component {
 
     handlePriceChange = (e) => {
         const { fiat } = this.props;
-        const precision = 10 ** INPUT_ETHER_DECIMALS;
         const name = e.target.name;
         const value = e.target.value;
         if(name === 'price') { // typing in ETH input
             if(value && !/^[0-9]{1,7}\.?[0-9]{0,18}$/.test(value)) return;
-            const fiatValue = String(Math.round(value * fiat.fiat * 100) / 100);
+            const fiatValue = String(precisionRound(value * fiat.fiat, 2));
             this.setState({ activeInput: 'eth', price: value, fiatInput: fiatValue });
         } else if (name === 'fiat') { // typing in fiat input
             if(fiat.fiat !== null) {
                 if(value && !/^[0-9]{1,10}\.?[0-9]{0,2}$/.test(value)) return;
-                const ethValue = String(Math.round(value / fiat.fiat * precision) / precision);
+                const ethValue = String(precisionRound(value / fiat.fiat, INPUT_ETHER_DECIMALS));
                 this.setState({ activeInput: 'fiat', price: ethValue, fiatInput: value });
             }
         }
