@@ -5,6 +5,8 @@
 Set-up the compile, test and deploy functionality:
 
 ```
+# brew install node
+# brew install yarn --without-node
 cd ethereum
 # nvm use 10
 yarn
