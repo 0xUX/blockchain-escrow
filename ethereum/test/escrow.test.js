@@ -80,6 +80,15 @@ describe('Escrow', () => {
             assert.ok(/revert/.test(error.message), "could send ether to fallback()");
         }
     });
+    it('throws an error when getting details of unknown asset', async () => {
+        try {
+            var info = await contract.methods.details(A_NAME).call({ from: bystander });
+            // console.log("details:", info);
+            assert.fail() // should not be reached
+        } catch (error) {
+            assert.ok(/revert/.test(error.message), "asset found");
+        }
+    });
     it('emergency break: exit() should send contract balance to owner', async () => {
         await contract.methods.fund().send({ from: buyer, value: INITBAL });
         const ownerBalStart = await web3.eth.getBalance(owner); // get the account balance of owner
@@ -92,7 +101,7 @@ describe('Escrow', () => {
     it('after selfdestruct contact should not be active', async () => {
         const tx = await contract.methods.exit().send({ from: owner });
         const code = await web3.eth.getCode(contract.options.address);
-//         console.log("contract code address:", code);
+        // console.log("contract code address:", code);
         assert.strictEqual(code, "0x0", "contract still live after exit()");
     });
     it('only owner can set fee wallet', async () => {
