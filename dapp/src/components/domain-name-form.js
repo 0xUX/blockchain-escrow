@@ -3,10 +3,9 @@ import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Link, Redirect } from 'react-router-dom';
 import { Button, Form, FormGroup, Col } from 'reactstrap';
-import { setCurrency } from '../redux/actions';
+import { updateDomain } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
 import { userIsAgent } from '../redux/selectors';
-import { FIAT_CALL_REQUEST, SET_CURRENCY, UPDATE_DOMAIN } from '../redux/action-types';
 import { PriceBreakdown, PriceInput, DomainInput } from './static';
 import { getPriceBreakdownInWei, precisionRound } from '../lib/util';
 
@@ -24,6 +23,16 @@ class DomainNameForm extends Component {
         activeInput: null, // either eth or fiat, field we're typing in
         done: false,
         mode: null // either sell or buy
+    }
+
+    componentDidMount = () => {
+        // this.contracts.Escrow.events
+        //     .Offered({/* eventOptions */}, (error, event) => {
+        //         console.log(error, event);
+        //     })
+        //     .on('data', (event) => console.log(event))
+        //     .on('changed', (event) => console.log(event))
+        //     .on('error', (error) => console.error(error));
     }
 
     handleSubmit = (e) => {
@@ -68,10 +77,32 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { agentKey, isAgent, fiat, currency, domain, updateDomain } = this.props; // @@@ agentKey en isAgent
+        const { agentKey, isAgent, fiat, domain, updateDomain, transactions, transactionStack } = this.props; // @@@ agentKey en isAgent
         const { mode, done } = this.state;
         if(agentKey && done) return <Redirect to="/" />;
         if(mode === 'buy') return <Redirect to={`/domain/${domain}`} />;
+
+        let txs = []
+
+        transactionStack.forEach(txHash => {
+            const tx = transactions[txHash];
+            console.log('tx', txHash, tx);
+            if(tx && tx.status === 'success') {
+                const events = tx.receipt.events;
+                txs.push(events);
+            }
+        });
+        // const txs = transactionStack.map(txHash => {
+        //     const tx = transactions[txHash];
+        //     console.log(tx);
+        //     if(tx && tx.status === 'success') {
+        //         const event = tx.receipt.events;
+        //         return event;
+        //     }
+        // });
+
+        console.log(txs);
+
         return (
             <div className="card p-3 mt-1">
                 {(agentKey || mode === 'sell') && <h3>Sell a domain name:</h3>}
@@ -115,33 +146,24 @@ DomainNameForm.propTypes = {
     //addAsset: PropTypes.func.isRequired, // @@@
     isAgent: PropTypes.bool.isRequired, // @@@
     agentKey: PropTypes.string, // @@@
-    currency: PropTypes.string.isRequired,
-    setCurrency: PropTypes.func.isRequired,
-    onRequestFiat: PropTypes.func.isRequired,
     fiat: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
     updateDomain: PropTypes.func.isRequired,
-    Escrow: PropTypes.object.isRequired
+    Escrow: PropTypes.object.isRequired,
+    transactions: PropTypes.object.isRequired,
+    transactionStack: PropTypes.array.isRequired
 };
 
 const mapStateToProps = state => {
     const isAgent = false; // userIsAgent(state); // @@@
     return { account: state.accounts[0],
              isAgent,  // @@@
-             currency: state.currency,
              fiat: state.fiat,
              domain: state.domain,
              Escrow: state.contracts.Escrow,
+             transactions: state.transactions,
+             transactionStack: state.transactionStack
            };
 };
 
-const mapDispatchToProps = dispatch => {
-    return {
-        onRequestFiat: currency => dispatch({ type: FIAT_CALL_REQUEST, payload: {currency} }),
-       // addAsset: (assetName, asset) => dispatch({ type: ADD_ASSET, payload: {assetName, asset} }), // @@@
-        setCurrency: currency => dispatch({ type: SET_CURRENCY, payload: {currency} }),
-        updateDomain: domain => dispatch({ type: UPDATE_DOMAIN, payload: {domain} }),
-    };
-};
-
-export default drizzleConnect(DomainNameForm, mapStateToProps, mapDispatchToProps);
+export default drizzleConnect(DomainNameForm, mapStateToProps, { updateDomain });
