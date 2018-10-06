@@ -22,21 +22,29 @@ pragma solidity ^0.4.24;
 contract Escrow {
     event Offered (                         // domain (asset) was published
         string indexed iname,               // name of asset (will be hashed)
-        address indexed agent,              // escrow agent (nil if direct sale)
         address indexed seller,             // seller address
+        address indexed agent,              // escrow agent (nil if direct sale)
+        address buyer,                      // buyer address (nil if no designated buyer)
         string name,                        // name of asset (not hashed)
         uint price                          // total (!) price in wei
     );
     event Retracted (                       // domain (asset) listing was retracted
-        string indexed iname                // name of asset (will be hashed)
+        string indexed iname,               // name of asset (will be hashed)
+        address indexed seller,             // seller address
+        address indexed agent,              // escrow agent (nil if direct sale)
+        address buyer                       // buyer address (nil if no designated buyer)
     );
     event Bought (                          // domain (asset) was bought
-        string indexed iname                // name of asset (will be hashed)
+        string indexed iname,               // name of asset (will be hashed)
+        address indexed seller,             // seller address
+        address indexed agent,              // escrow agent (nil if direct sale)
+        address buyer                       // buyer address
     );
     event FundsReleased (                   // funds were released
         string indexed iname,               // name of asset (will be hashed)
+        address indexed seller,             // seller address
         address indexed agent,              // escrow agent (nil if direct sale)
-        address indexed buyer,              // buyer address
+        address buyer,                      // buyer address
         uint price                          // net (!) price in wei
     );
 
@@ -99,8 +107,8 @@ contract Escrow {
         revert("use fund() to fund your escrow account");
     }
 
-    /// kill this contract, send any funds left to owner
-    /// note this is not sent to the handling_wallet
+    /// kill this contract, send any funds left to owner (!)
+    /// note: this is not sent to the handling_wallet
     /// 
     function exit() external ownerOnly {
         selfdestruct(contract_owner);
@@ -147,8 +155,8 @@ contract Escrow {
     ///
     /// @param name  Name of asset
     /// @param price Price in wei (uint)
-    /// @param buyer Address of buyer
-    /// @param agent Address of agent
+    /// @param buyer Address of buyer (nil if no designated buyer)
+    /// @param agent Address of agent (nil if direct sale)
     /// 
     function offer(string name, uint price, address buyer, address agent) public {
         // put the asset up for sale (or update it)
@@ -185,7 +193,7 @@ contract Escrow {
         // final check for uint overflow of price + fees
         uint cost = a.price + a.escrowfee + a.handlingfee;
         require(cost > a.price, "price unit overflow");
-        emit Offered(name, agent, msg.sender, name, cost);
+        emit Offered(name, msg.sender, agent, buyer, name, cost);
     }
 
     /// computeFee helper function to avoid uint overflow
@@ -245,7 +253,7 @@ contract Escrow {
         require(a.state == AssetState.FORSALE, "updates not allowed anymore"); //@@@ or should the money be returned
         // clears the entry in the assets mapping
         delete assets[hash];
-        emit Retracted(name);
+        emit Retracted(name, a.seller, a.agent, a.buyer);
     }
 
     /// cleanup an offer - only by contract owner
@@ -267,7 +275,7 @@ contract Escrow {
         }
         // clears the entry in the assets mapping
         delete assets[hash];
-        emit Retracted(name);
+        emit Retracted(name, a.seller, a.agent, a.buyer);
     }
 
     /// buy an asset with caller's account balance and sent ether, if any
@@ -296,7 +304,7 @@ contract Escrow {
         a.buyer = msg.sender;                   // sets buyer if not already
         a.state = AssetState.PAID;              // asset is now paid for by buyer
         a.blocknumber = block.number;           // makes note when it was paid
-        emit Bought(name);
+        emit Bought(name, a.seller, a.agent, a.buyer);
     }
 
     /// release funds to seller (and fees) after asset received - only buyer or agent can call
@@ -320,7 +328,7 @@ contract Escrow {
             balances[a.agent] += a.escrowfee;       // pay agent
         }
         a.state = AssetState.RELEASED;              // asset record can be reused now
-        emit FundsReleased(name, a.agent, a.buyer, a.price);
+        emit FundsReleased(name, a.seller, a.agent, a.buyer, a.price);
         handling_wallet.transfer(a.handlingfee);    // pay and deposit handling fees
         // OR (not paid out directly, but increase balance):
         // balances[handling_wallet] += a.handlingfee;
