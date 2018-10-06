@@ -41,7 +41,7 @@ do
 		fi
 
 		# Check for WIP commit
-		commit=`git rev-list -n 1 --grep '^WIP' "$range"`
+		commit=`git rev-list -n 1 --grep '^WIP@@@' "$range"`
 		if [ -n "$commit" ]
 		then
 			echo >&2 "Found WIP commit in $local_ref, not pushing"
@@ -53,5 +53,21 @@ done
 # check if there are changed dependecies
 yarn outdated --cwd ~/dev/0xUX/blockchain-escrow/dapp
 yarn outdated --cwd ~/dev/0xUX/blockchain-escrow/ethereum
+
+# exit on errors
+set -e
+# ABI file name
+abi="Escrow.abi.json"
+# where is the repo top
+top=$(git rev-parse --show-toplevel)
+# make a fresh ABI of the contract if needed
+(cd  $top/ethereum; make -s compile)
+# compare it to what's used in dapp code
+if ! cmp -s $top/ethereum/build/$abi $top/dapp/contracts/$abi
+then
+    echo Contract ABI is different from the one used in dapp.
+    echo Copy $top/ethereum/build/$abi to $top/dapp/src/$abi and test the dapp again before pushing.
+  exit 1
+fi
 
 exit 0

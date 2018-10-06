@@ -1,4 +1,4 @@
-import EscrowABI from './Escrow.abi.json';
+import EscrowABI from '../contracts/Escrow.abi.json';
 import { ADDRESS } from './constants';
 import Web3 from 'web3';
 
