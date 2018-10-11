@@ -14,20 +14,29 @@ const web3 = new Web3(provider);
 const deploy = async () => {
     const contractFee = 5;
     accounts = await web3.eth.getAccounts();
-    console.log('Deploying on Rinkeby from', accounts[0]);
-    console.log('Monitor progress:', 'https://rinkeby.etherscan.io/address/'+accounts[0]);
+    console.log('Deploying on Rinkeby');
+    console.log('From:', 'https://rinkeby.etherscan.io/address/'+accounts[0]);
 
 //     var contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface));
 //     var contractData = contract.new.getData(contractFee, {data: '0x'+compiledContract.bytecode});
 //     var estimate = web3.eth.estimateGas({data: contractData});
 //     console.log(estimate);
 
-    const contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface))
-        .deploy({ data: '0x'+compiledContract.bytecode, arguments: [contractFee] })
-        .send({ from: accounts[0], gas: '5000000', gasPrice: web3.utils.toWei('2', 'gwei') });
-    console.log('Deployed!');
-//     console.log(contract);
-    console.log('Deployed to', contract.options.address);
+    try {
+        const contract = await new web3.eth.Contract(JSON.parse(compiledContract.interface))
+            .deploy({ data: '0x'+compiledContract.bytecode, arguments: [contractFee] })
+            .send({ from: accounts[0], gas: '5000000', gasPrice: web3.utils.toWei('2', 'gwei') });
+        console.log('Deployed :) Contract at', contract.options.address);
+    } catch (error) {
+        console.log(error);
+        console.log('Failed to deploy :(');
+        process.exit(1);
+    }
+
+    // const fs = require('fs');
+    // fs.appendFileSync('deployed.txt', contract.options.address + '\n');
+
+    process.exit(0);
 };
 
 deploy();
