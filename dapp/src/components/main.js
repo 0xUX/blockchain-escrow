@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Container } from 'reactstrap';
 import { networkDetails } from '../lib/network';
+import { getEventAbi, getEventAbiInputs } from '../lib/eth';
 import { Message } from './ui';
 import { userExists } from '../redux/selectors';
 import { FROM_BLOCK, ADDRESS } from '../constants';
 import Balance from './balance';
+import ABI from '../../contracts/Escrow.abi.json';
 
 let subscriptionNetwork = networkDetails('rinkeby');
 let web3websocket; // web3 interface for subscription network (Infura)
@@ -14,9 +16,7 @@ let web3websocket; // web3 interface for subscription network (Infura)
 class Body extends Component {
     constructor(props, context) {
         super(props);
-
         this.web3 = context.drizzle.web3;
-
         this.contracts = context.drizzle.contracts;
     }
 
@@ -35,28 +35,71 @@ class Body extends Component {
 
     getPastLogs = async () => {
         const web3 = this.web3; // this uses the web3 provider passed in from drizzle context, so MM
-
+        const { account } = this.props;
         this.setState({ pastLogsLoading: true });
 
-        this.setState({ coursesFromLogsLoading: false });
+        // Get the topic0 for the Offered event
+        const accountTopic = web3.utils.padLeft(account, 64);
+        const offeredEventABI = getEventAbi(ABI, 'Offered');
+        console.log(offeredEventABI);
+        const offeredTopic0 = web3.eth.abi.encodeEventSignature(offeredEventABI);
+        console.log(offeredTopic0, accountTopic);
 
-        // Returns array of transactions:
-        // address:"0x091A02BF0C25B519b0B4E99cfAd72Aa3c07362B3"
-        // blockHash:"0xc62914abe38b13c2a313534ce062cf5e5cce50db3a52eab510fe1882edcdd6b7"
-        // blockNumber:2864371
-        // data:"0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007455448203130310000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045374616e00000000000000000000000000000000000000000000000000000000"
-        // id:"log_f112fdb8"
-        // logIndex:6
-        // removed:false
-        // topics: [
-        //           0:"0x0314a863b2e94adb6cd6b5a2e580b6c339838ac7a670b298d8eab29a01df03a8"
-        //           1:"0xa089d35ebaa48c1120412580bc3d366c8652b094a8daba79723d50d438816b25"
-        // ]
-        // length:2
-        // transactionHash:"0xfcde462033a033a78757233a5be2ca331dcf74a812c8825fdcb5f75f632ad1cb"
-        // transactionIndex:7
+        // Get the topic0 for the Bought event
+        // const boughtEventABI = getEventAbi(ABI, 'Bought');
+        // console.log(boughtEventABI);
+        // const boughtTopic0 = web3.eth.abi.encodeEventSignature(boughtTopic0);
+
+
+        // @@@ THE STEPS
+        // Get all relevant assets through Involve event
+        // Get details for all assets
+        // Check if still relevant (still a party? not too old?). If not, remove from store somehow (LATER!)
+        // Store the dataKeys in the asset state
+        // Preload data??? (LATER)
+
+        // try {
+
+            // Get raw event logs for Offered as a seller
+            const sellerEvents = await web3.eth.getPastLogs({
+                fromBlock: web3.utils.numberToHex(FROM_BLOCK),
+                address: ADDRESS,
+                topics: [offeredTopic0, null, accountTopic]
+            });
+        console.log(sellerEvents);
+//             // Get raw event logs for Offered as an agent
+//             const agentEvents = web3.eth.getPastLogs({
+//                 fromBlock: web3.utils.numberToHex(FROM_BLOCK),
+//                 address: ADDRESS,
+//                 topics: [offeredTopic0, null, account]
+//             });
+
+//             // Get raw event logs for Bought (any role)
+//             const boughtEvents = web3.eth.getPastLogs({
+//                 fromBlock: web3.utils.numberToHex(FROM_BLOCK),
+//                 address: ADDRESS,
+//                 topics: [boughtTopic0]
+//             });
+
+//             const events = await Promise.all([sellerEvents, agentEvents, boughtEvents]);
+
+            // Get decoded events
+            const eventAbiInputs = getEventAbiInputs(ABI, 'Offered');
+            for(const evt of sellerEvents) {
+                console.log(evt);
+                const decodedEvent = web3.eth.abi.decodeLog(eventAbiInputs, evt.data, evt.topics);
+                const dn = decodedEvent.name;
+                console.log(decodedEvent, dn);
+                const dataKey = this.contracts.Escrow.methods.details.cacheCall(dn);
+                console.log(dataKey);
+            }
+
+        // } catch(error) {
+        //     console.log('pastLogs error', error);
+        // }
+
+        this.setState({ getPastLogs: false });
     }
-
 
     showMessages = () => {
         const { isUser, fiat, currency } = this.props;
@@ -87,7 +130,8 @@ Body.propTypes = {
     currency: PropTypes.string.isRequired,
     fiat: PropTypes.object.isRequired,
     showBalance: PropTypes.bool.isRequired,
-    onRequestFiat: PropTypes.func.isRequired
+    onRequestFiat: PropTypes.func.isRequired,
+    account: PropTypes.string.isRequired
 };
 
 const mapStateToProps = state => {
@@ -95,7 +139,9 @@ const mapStateToProps = state => {
     return { isUser,
              currency: state.currency,
              fiat: state.fiat,
-             showBalance: state.showBalance };
+             showBalance: state.showBalance,
+             account: state.accounts[0],
+           };
 };
 
 const mapDispatchToProps = dispatch => {

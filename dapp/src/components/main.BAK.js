@@ -36,7 +36,8 @@ class Body extends Component {
     //  async componentDidMount() {
 
         // const escrow = EscrowContract(this.web3);
-        // console.log('escrow', escrow);
+    // console.log('escrow', escrow);
+
         // if(escrow) {
         //     const code = await this.web3.eth.getCode(escrow.options.address);
         //     console.log(code);
