@@ -174,6 +174,7 @@ describe('Escrow', () => {
         info = await contract.methods.details(A_NAME).call({ from: owner });
         assert.ok(!info['forsale']); // should not be for sale
         assert.ok(info['paid']); // should  be paid
+        assert.strictEqual(info['buyer'], buyer);
         // check for a Bought event
         events = await contract.getPastEvents('Bought');
         assert.ok(events[0]) // should return one

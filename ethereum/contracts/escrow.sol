@@ -233,12 +233,14 @@ contract Escrow {
     /// @return uint        Price
     /// @return bool        For sale?
     /// @return bool        Paid by buyer?
+    /// @return address     Buyer
     /// 
     function details(string name) external view 
         returns (
             address seller, address agent,
             uint netprice, uint price,
-            bool forsale, bool paid
+            bool forsale, bool paid,
+            address buyer
         ) {
         bytes32 hash = keccak256(bytes(name));
         Asset storage a = assets[hash];
@@ -250,6 +252,7 @@ contract Escrow {
         price = a.price + a.escrowfee + a.handlingfee;
         forsale = a.state == AssetState.FORSALE;
         paid = a.state == AssetState.PAID;
+        buyer = a.buyer;
     }
 
     /// retract an offer - by seller or agent
