@@ -161,15 +161,22 @@ describe('Escrow', () => {
         assert.ok(!info['paid']); // should not be paid
         assert.strictEqual(info['netprice'], String(A_PRICE));
         assert.strictEqual(info['price'], String(A_PRICE_AGENT_TTL));
-        // check the generated event
+        // check the generated Offered event
         var events = await contract.getPastEvents('Offered');
         assert.strictEqual(events[0].returnValues['agent'], agent);
         assert.strictEqual(events[0].returnValues['seller'], seller);
         assert.strictEqual(events[0].returnValues['name'], A_NAME);
         assert.strictEqual(events[0].returnValues['price'], A_PRICE_AGENT_TTL);
+        // check the Involve events
+        events = await contract.getPastEvents('Involve');
+        assert.strictEqual(events[0].returnValues['account'], seller);
+        assert.strictEqual(events[1].returnValues['account'], agent);
         // now the buyer acquires it
         await contract.methods.fund().send({ from: buyer, value: INITBAL });
         await contract.methods.buy(A_NAME).send({ from: buyer });
+        // check the Involve events
+        events = await contract.getPastEvents('Involve');
+        assert.strictEqual(events[0].returnValues['account'], buyer);
         // check asset state
         info = await contract.methods.details(A_NAME).call({ from: owner });
         assert.ok(!info['forsale']); // should not be for sale
@@ -227,8 +234,37 @@ describe('Escrow', () => {
         assert.strictEqual(events[0].returnValues['name'], A_NAME);
         assert.strictEqual(events[0].returnValues['price'], A_PRICE_TTL);
     });
-    it('can sell a domain to specific buyer', async () => {
+    it('can sell a domain to specific buyer direct', async () => {
         await contract.methods.offerBuyerDirect(A_NAME, A_PRICE, buyer).send({ from: seller });
+        // check the Involve events
+        events = await contract.getPastEvents('Involve');
+        assert.strictEqual(events[0].returnValues['account'], seller);
+        assert.strictEqual(events[1].returnValues['account'], buyer);
+        // now a bystander tries to acquire it, should fail
+        try {
+            await contract.methods.buy(A_NAME).send({ from: bystander, value: INITBAL });
+            assert.fail() // should not be reached
+        } catch (error) {
+            assert.ok(/revert/.test(error.message), "bystander could buy");
+        }
+        // now the buyer acquires it
+        await contract.methods.buy(A_NAME).send({ from: buyer, value: INITBAL });
+        info = await contract.methods.details(A_NAME).call({ from: owner });
+        assert.ok(!info['forsale']); // should not be for sale
+    });
+    it('can sell a domain to specific buyer via an agent', async () => {
+        //offer(string name, uint price, address buyer, address agent) 
+        await contract.methods.offer(A_NAME, A_PRICE, buyer, agent).send({ from: seller });
+        // check the Involve events
+        events = await contract.getPastEvents('Involve');
+        assert.strictEqual(events[0].returnValues['account'], seller);
+        assert.strictEqual(events[1].returnValues['account'], buyer);
+        assert.strictEqual(events[2].returnValues['account'], agent);
+        // check the storage
+        var info = await contract.methods.details(A_NAME).call({ from: owner });
+        assert.strictEqual(info['seller'], seller);
+        assert.strictEqual(info['agent'], agent); // via agent
+        assert.strictEqual(info['buyer'], buyer); // to designated buyer
         // now a bystander tries to acquire it, should fail
         try {
             await contract.methods.buy(A_NAME).send({ from: bystander, value: INITBAL });
@@ -247,6 +283,7 @@ describe('Escrow', () => {
         var info = await contract.methods.details(A_NAME).call({ from: owner });
         assert.strictEqual(info['seller'], seller);
         assert.strictEqual(info['agent'], ADDR0); // not via agent
+        assert.strictEqual(info['buyer'], ADDR0); // no designated buyer
         assert.ok(info['forsale']); // should be for sale
         assert.ok(!info['paid']); // should not be paid
         assert.strictEqual(info['netprice'], A_PRICE);
