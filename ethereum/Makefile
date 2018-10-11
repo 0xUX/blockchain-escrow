@@ -15,12 +15,11 @@ tests: build/Escrow.json
 
 # deploy contract on Rinkeby network
 deploy: build/Escrow.json build/Escrow.abi.json rinkeby-keys.json
-	node deploy.js
+	node deploy.js rinkeby
 
-# deploy contract on main network (TODO)
+# deploy contract on main network
 deploy-main: build/Escrow.json build/Escrow.abi.json main-keys.json
-	#node deploy.js
-	echo "TODO"
+	node deploy.js main
 
 # ABI and compiled code dependencies
 build/Escrow.json build/Escrow.abi.json: contracts/escrow.sol
