@@ -44,7 +44,7 @@ Use this URL in the next step.
 
 ### Create the HDWallet file
 
-Created a file `ethereum/rinkeby-keys.json` with the following contents:
+Created a local file `ethereum/rinkeby-keys.json` with your credentials in the following format:
 
 ```
 {
@@ -58,9 +58,11 @@ The `phrase` is the *seed phrase* of your Ethereum wallet.
 
 The `api` is the Infura API endpoint that is used to submit transactions, the URL you copied on the [Infura dashboard](https://infura.io/dashboard).
 
-Note that the endpoint includes the _network_ you are deploying to, next to the API key. Check this is indeed the *Rinkeby* test network.
+Note that the endpoint includes the _network_ you are deploying to, next to the API key. Check this is indeed the *Rinkeby* test network, or you may inadvertently deploy on the main network.
 
-### Deploy the contract
+To actually deploy on the main network, repeat the steps above to create a local file `ethereum/main-keys.json` with your credentials for the main network.
+
+### Deploy the contract on Rinkeby
 
 Make sure there is enough Ether on the account to deploy the contract on the chosen network, in this case the Rinkeby network. If the balance is too low, get more Ether from the [Faucet](https://www.rinkeby.io/#faucet) on this test network.
 
@@ -82,6 +84,9 @@ Note: In case the deploy scripts times out, most of the time, the deployment sti
 
 [TODO: describe & implement make target `deploy-main`]
 
+**NOTE:** Deploying on the Main network will cost you actual money.
+
+First make sure you have enough Ether on the account to deploy the contract.
 Then deploy the contract on the Main network like this:
 ```
 cd ethereum
