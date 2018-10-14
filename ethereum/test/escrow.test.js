@@ -119,7 +119,7 @@ describe('Escrow', () => {
         await contract.methods.enroll(bystander, AGENT_FEE).send({ from: owner });
         info = await contract.methods.whois(bystander).call();
         assert.ok(info['enrolled'], "account is not an agent after enroll");
-        assert.strictEqual(info['promillage'], String(AGENT_FEE));
+        assert.strictEqual(info['permillage'], String(AGENT_FEE));
         await contract.methods.dismiss(bystander).send({ from: owner });
         info = await contract.methods.whois(bystander).call();
         assert.ok(!info['enrolled'], "account is an agent after dismiss");
@@ -161,6 +161,8 @@ describe('Escrow', () => {
         assert.strictEqual(info['state'], "FORSALE"); // should now be for sale
         assert.strictEqual(info['netprice'], String(A_PRICE));
         assert.strictEqual(info['price'], String(A_PRICE_AGENT_TTL));
+        assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
+        assert.strictEqual(info['escrow_pm'], String(AGENT_FEE));
         // check the generated Offered event
         var events = await contract.getPastEvents('Offered');
         assert.strictEqual(events[0].returnValues['agent'], agent);
@@ -241,6 +243,13 @@ describe('Escrow', () => {
         events = await contract.getPastEvents('Involve');
         assert.strictEqual(events[0].returnValues['account'], seller);
         assert.strictEqual(events[1].returnValues['account'], buyer);
+        // check the storage
+        var info = await contract.methods.details(A_NAME).call({ from: owner });
+        assert.strictEqual(info['seller'], seller);
+        assert.strictEqual(info['agent'], ADDR0); // not via agent
+        assert.strictEqual(info['buyer'], buyer); // to designated buyer
+        assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
+        assert.strictEqual(info['escrow_pm'], "0");
         // now a bystander tries to acquire it, should fail
         try {
             await contract.methods.buy(A_NAME).send({ from: bystander, value: INITBAL });
@@ -266,7 +275,8 @@ describe('Escrow', () => {
         assert.strictEqual(info['seller'], seller);
         assert.strictEqual(info['agent'], agent); // via agent
         assert.strictEqual(info['buyer'], buyer); // to designated buyer
-        // now a bystander tries to acquire it, should fail
+        assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
+        assert.strictEqual(info['escrow_pm'], String(AGENT_FEE));
         try {
             await contract.methods.buy(A_NAME).send({ from: bystander, value: INITBAL });
             assert.fail() // should not be reached
