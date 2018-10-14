@@ -1,14 +1,20 @@
-// node deploy.js
+// node deploy.js rinkeby|main <compiled-contract>
 //
 // deploy script, grabs the compiled contract and deploys it on the network
 
 const util = require('util');
+const path = require('path');
 const assert = require('assert');
 
-const network = process.argv[2]; // rinkeby or main
-assert.ok(network, "usage: "+process.argv[1]+" <network>");
+// get and check arguments
+const network = process.argv[2];
+const networks = ['rinkeby', 'main'];
+const script = path.basename(process.argv[1]);
+assert.ok(networks.indexOf(network) >= 0, "usage: "+script+" rinkeby|main <file>");
 
-const compiledContract = require('./build/Escrow.json');
+const fnContract = process.argv[3];
+// const compiledContract = require('./build/Escrow.json');
+const compiledContract = require(fnContract);
 
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const Web3 = require('web3');
@@ -17,6 +23,8 @@ const Web3 = require('web3');
 const walletKeys = require(util.format('./%s-keys.json', network));
 const provider = new HDWalletProvider(walletKeys.phrase, walletKeys.api);
 const web3 = new Web3(provider);
+// console.log(network, fnContract); process.exit(0); //@@@
+
 
 const deploy = async () => {
     const contractFee = 5;

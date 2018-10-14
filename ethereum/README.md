@@ -76,8 +76,6 @@ Make a note of the address of the contract after deployment and optionally save 
 
 Note: In case the deploy scripts times out, most of the time, the deployment still continues. You can check the status on Etherscan. The Etherscan link to the deploying account is shown by the deploy script as well.
 
-[TODO: fix deploy script so it stops after succesful deploy]
-
 [TODO: tell about interacting with the contract from Remix using the Injected Web3 from MetaMask]
 
 ## Deploy on the Main network

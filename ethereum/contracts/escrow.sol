@@ -54,6 +54,10 @@ contract Escrow {
         address indexed account,            // seller address
         string name                         // name of asset (not hashed)
     );
+    event Enrolled (                        // agent enrolled
+        address indexed account,            // agent account address
+        uint permillage                      // fee (permillage, >0 <256)
+    );
 
     enum AssetState {
         FORSALE,                            // asset is put up for sale by seller
@@ -75,17 +79,17 @@ contract Escrow {
 //    struct Agent {
 //        string name;                      // name of escrow agent
 //        string url;                       // escrow agent site
-//        uint8 fee;                        // fee (promilage, >0 <256)
+//        uint8 fee;                        // fee (permillage, >0 <256)
 //    }
 //    Agent [] all_agents
 
     address contract_owner;                 // owner of this contract
     address handling_wallet;                // where eth for handling fees goes
-    uint8 handling_promillage;              // owner fee on transactions
+    uint8 handling_permillage;              // owner fee on transactions
     uint constant min_blocks = 10;          // minimum number of blocks before payout
 
     mapping(address => uint) balances;      // wallets of all participants (including contract owner)
-    mapping(address => uint8) agents;       // agents and their fee (promilage, >0 <256)
+    mapping(address => uint8) agents;       // agents and their fee (permillage, >0 <256)
     mapping(bytes32 => Asset) assets;       // all assets offered, index by keccak256(asset_name)
 
     // Note that keccak256() is 30 gas + 6 gas for each word (rounded up) for input data
@@ -96,14 +100,14 @@ contract Escrow {
         _;
     }
 
-    constructor(uint promilage) public payable {
+    constructor(uint permillage) public payable {
         // initialize contract
-        require(promilage > 0, "fee too low");
-        require(promilage < 256, "fee too high");
+        require(permillage > 0, "fee too low");
+        require(permillage < 256, "fee too high");
         // set contract owner, fee and fee destination account
         contract_owner = msg.sender;
         handling_wallet = msg.sender;
-        handling_promillage = uint8(promilage);
+        handling_permillage = uint8(permillage);
         // store any ether sent in contract owner's wallet
         balances[msg.sender] += msg.value;
     }
@@ -202,7 +206,7 @@ contract Escrow {
             a.agent = agent;
             a.escrowfee = computeFee(price, agents[a.agent]);
         }
-        a.handlingfee = computeFee(price, handling_promillage);
+        a.handlingfee = computeFee(price, handling_permillage);
 
         // final check for uint overflow of price + fees
         uint cost = a.price + a.escrowfee + a.handlingfee;
@@ -213,13 +217,13 @@ contract Escrow {
     /// computeFee helper function to avoid uint overflow
     ///
     /// @param price        Net price of asset
-    /// @param promillage   Fee promillage (1/1000, uint8)
+    /// @param permillage   Fee permillage (1/1000, uint8)
     ///
     /// @return fee         Computed fee (uint)
     /// 
-    function computeFee(uint price, uint8 promillage) private pure returns (uint fee) {
-        fee = price * promillage;
-        assert(fee / promillage == price); // check for overflow in fee computation
+    function computeFee(uint price, uint8 permillage) private pure returns (uint fee) {
+        fee = price * permillage;
+        assert(fee / permillage == price); // check for overflow in fee computation
         fee /= 1000;
     }
 
@@ -229,30 +233,34 @@ contract Escrow {
     ///
     /// @return address     Seller
     /// @return address     Agent
+    /// @return address     Buyer
     /// @return uint        Net price
     /// @return uint        Price
-    /// @return bool        For sale?
-    /// @return bool        Paid by buyer?
-    /// @return address     Buyer
+    /// @return uint8       Handling (1/1000s)
+    /// @return uint8       Escrow (1/1000s)
+    /// @return string      State (FORSALE/PAID/RELEASED)
     /// 
     function details(string name) external view 
         returns (
-            address seller, address agent,
+            address seller, address agent, address buyer,
             uint netprice, uint price,
-            bool forsale, bool paid,
-            address buyer
+            uint8 handling_pm,
+            uint8 escrow_pm,
+            string state
         ) {
         bytes32 hash = keccak256(bytes(name));
         Asset storage a = assets[hash];
+        string[3] memory stateRepr = ["FORSALE", "PAID", "RELEASED"];
 
         require(a.seller != address(0), "no listing found"); // @@@ or fine to return empty record?
         seller = a.seller;
         agent = a.agent;
+        buyer = a.buyer;
         netprice = a.price;
         price = a.price + a.escrowfee + a.handlingfee;
-        forsale = a.state == AssetState.FORSALE;
-        paid = a.state == AssetState.PAID;
-        buyer = a.buyer;
+        handling_pm = handling_permillage;
+        escrow_pm = agents[a.agent];
+        state = stateRepr[uint(a.state)];
     }
 
     /// retract an offer - by seller or agent
@@ -385,14 +393,15 @@ contract Escrow {
     /// enroll or update escrow agent - only contract owner can call
     ///
     /// @param agent Address of agent
-    /// @param promilage Fee of agent, in 1/1000 (uint)
+    /// @param permillage Fee of agent, in 1/1000 (uint)
     /// 
-    function enroll(address agent, uint promilage) external ownerOnly {
+    function enroll(address agent, uint permillage) external ownerOnly {
         //@@@ allow non-owner too, possibly charging an enrollment fee
         require(agent != address(0), "illegal agent address");
-        require(promilage > 0, "fee too low");
-        require(promilage < 256, "fee too high");
-        agents[agent] = uint8(promilage);
+        require(permillage > 0, "fee too low");
+        require(permillage < 256, "fee too high");
+        agents[agent] = uint8(permillage);
+        emit Enrolled(agent, permillage);
     }
 
     /// dismiss escrow agent - only contract owner can call
@@ -406,20 +415,21 @@ contract Escrow {
         // any assets still for sale will still pay out to agent listed upon release
     }
 
-    /// isAgent check if someone is enrolled as agent - anyone can call
+    /// whois tells if someone is enrolled as agent - anyone can call
     ///
     /// @param agent Address of agent (or nill to check is caller is enrolled)
     /// @return enrolled (bool) If agent (if nil: caller) is indeed listed as agent.
+    /// @return permillage (uint) the permillage (1/1000s) this agents takes
     /// 
-    function isAgent(address agent) external view returns (bool enrolled) {
+    function whois(address agent) external view returns (bool enrolled, uint permillage) {
         //@@@ replace by whois() when we store more than address & fee
+        address account = agent;
         if (agent == address(0)) {
             // check if the caller is listed as agent
-            enrolled = agents[msg.sender] > 0;
+            account = msg.sender;
         }
-        else {
-            enrolled = agents[agent] > 0;
-        }
+        enrolled = agents[account] > 0;
+        permillage = agents[account];
     }
 }
 
