@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Container } from 'reactstrap';
+import { withRouter } from 'react-router';
 import { networkDetails } from '../lib/network';
 import { getEventAbi, getEventAbiInputs } from '../lib/eth';
 import { Message } from './ui';
@@ -39,40 +40,69 @@ class Body extends Component {
         this.setState({ pastLogsLoading: true });
 
         // Get the topic0 for the Offered event
-        const accountTopic = web3.utils.padLeft(account, 64);
-        const offeredEventABI = getEventAbi(ABI, 'Offered');
-        console.log(offeredEventABI);
-        const offeredTopic0 = web3.eth.abi.encodeEventSignature(offeredEventABI);
-        console.log(offeredTopic0, accountTopic);
+        // const accountTopic = web3.utils.padLeft(account, 64);
+        // const offeredEventABI = getEventAbi(ABI, 'Offered');
+        // console.log(offeredEventABI);
+        // const offeredTopic0 = web3.eth.abi.encodeEventSignature(offeredEventABI);
+        // console.log(offeredTopic0, accountTopic);
 
         // Get the topic0 for the Bought event
         // const boughtEventABI = getEventAbi(ABI, 'Bought');
         // console.log(boughtEventABI);
         // const boughtTopic0 = web3.eth.abi.encodeEventSignature(boughtTopic0);
 
+        // Keep track of last processed block
+        let lastRelevantBlock = FROM_BLOCK;
 
-        // @@@ THE STEPS
         // Get all relevant assets through Involve event
-        // Get details for all assets
-        // Check if still relevant (still a party? not too old?). If not, remove from store somehow (LATER!)
-        // Store the dataKeys in the asset state
-        // Preload data??? (LATER)
+        const involveEventABI = getEventAbi(ABI, 'Involve');
+        const accountTopic = web3.utils.padLeft(account, 64);
+        console.log(involveEventABI);
+        const involveTopic0 = web3.eth.abi.encodeEventSignature(involveEventABI);
+        console.log(involveTopic0, accountTopic);
 
         // try {
+        // Get past logs for Involve(*, account)
+        const involvedEvents = await web3.eth.getPastLogs({
+            fromBlock: web3.utils.numberToHex(FROM_BLOCK),
+            address: ADDRESS,
+            topics: [involveTopic0, null, accountTopic]
+        });
+        console.log(involvedEvents);
 
-            // Get raw event logs for Offered as a seller
-            const sellerEvents = await web3.eth.getPastLogs({
-                fromBlock: web3.utils.numberToHex(FROM_BLOCK),
-                address: ADDRESS,
-                topics: [offeredTopic0, null, accountTopic]
-            });
-        console.log(sellerEvents);
-//             // Get raw event logs for Offered as an agent
-//             const agentEvents = web3.eth.getPastLogs({
-//                 fromBlock: web3.utils.numberToHex(FROM_BLOCK),
-//                 address: ADDRESS,
-//                 topics: [offeredTopic0, null, account]
-//             });
+        // Get decoded events
+        const eventAbiInputs = getEventAbiInputs(ABI, 'Involve');
+        for(const evt of involvedEvents) {
+            lastRelevantBlock = Math.max(lastRelevantBlock, evt.blockNumber);
+            console.log(evt);
+            const decodedEvent = web3.eth.abi.decodeLog(eventAbiInputs, evt.data, evt.topics);
+            const dn = decodedEvent.name;
+            console.log(decodedEvent, dn);
+            // Get details for asset
+            const dataKey = this.contracts.Escrow.methods.details.cacheCall(dn);
+            console.log(dataKey);
+        }
+
+        console.log('lastRelevantBlock', lastRelevantBlock);
+
+        // Check if still relevant (still a party? not too old?). If not, remove from store somehow (LATER!)
+        // Preload data??? (LATER)
+
+
+
+        // Get raw event logs for Offered as a seller
+        // const sellerEvents = await web3.eth.getPastLogs({
+        //     fromBlock: web3.utils.numberToHex(FROM_BLOCK),
+        //     address: ADDRESS,
+        //     topics: [offeredTopic0, null, accountTopic]
+        // });
+        //         console.log(sellerEvents);
+        //             // Get raw event logs for Offered as an agent
+        //             const agentEvents = web3.eth.getPastLogs({
+        //                 fromBlock: web3.utils.numberToHex(FROM_BLOCK),
+        //                 address: ADDRESS,
+        //                 topics: [offeredTopic0, null, account]
+        //             });
 
 //             // Get raw event logs for Bought (any role)
 //             const boughtEvents = web3.eth.getPastLogs({
@@ -83,16 +113,6 @@ class Body extends Component {
 
 //             const events = await Promise.all([sellerEvents, agentEvents, boughtEvents]);
 
-            // Get decoded events
-            const eventAbiInputs = getEventAbiInputs(ABI, 'Offered');
-            for(const evt of sellerEvents) {
-                console.log(evt);
-                const decodedEvent = web3.eth.abi.decodeLog(eventAbiInputs, evt.data, evt.topics);
-                const dn = decodedEvent.name;
-                console.log(decodedEvent, dn);
-                const dataKey = this.contracts.Escrow.methods.details.cacheCall(dn);
-                console.log(dataKey);
-            }
 
         // } catch(error) {
         //     console.log('pastLogs error', error);
@@ -152,4 +172,4 @@ const mapDispatchToProps = dispatch => {
 
 const BodyContainer = drizzleConnect(Body, mapStateToProps, mapDispatchToProps);
 
-export default BodyContainer;
+export default withRouter(BodyContainer);

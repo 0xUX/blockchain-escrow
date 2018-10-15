@@ -7,6 +7,7 @@ import { toggleBalance } from '../redux/actions';
 import { getUserBalance } from '../redux/selectors';
 import { DelayedSpinner } from './ui';
 
+
 class BalanceIcon extends Component {
     constructor(props, context) {
         super(props);
@@ -42,7 +43,7 @@ BalanceIcon.propTypes = {
 
 const mapStateToProps = state => {
     return {
-        Escrow: state.contracts.Escrow,
+        Escrow: state.contracts.Escrow
     };
 };
 

@@ -3,6 +3,9 @@ import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 export const getPriceBreakdownInWei = (priceInEther, agentKey) => {
     if(!priceInEther) priceInEther = '0';
+
+    console.log(priceInEther, agentKey, AGENT_FEES[agentKey]);
+
     const netPrice = web3utils.toWei(priceInEther, 'ether');
     const netPriceBN = web3utils.toBN(netPrice); // needed for math with big wei numbers
     const escrowfee = agentKey ? netPriceBN.divn(1000).muln(AGENT_FEES[agentKey]) : web3utils.toBN('0');

@@ -5,7 +5,7 @@ import { drizzleConnect } from 'drizzle-react';
 import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
-import { ASSET_STATES, USERS, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
+import { ASSET_STATES, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
 import { AssetInfo, PriceInput, PriceBreakdown, CurrencySelector } from './static';
 import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei, precisionRound } from '../lib/util';
 import { AmountPlusFiat } from './ui.js';
@@ -28,7 +28,7 @@ class Domain extends Component {
             <div>
                 {header}
                 {cost > 0 && <div><h4><AmountPlusFiat amountInEther={cost} /></h4> <CurrencySelector /></div>}
-                {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{USERS[asset.agent]}</Link></h3>}
+                {asset.agent && role !== 'agent' && <h3>Escrow service provided by <Link to={`/agent/${asset.agent}`}>{asset.agent}</Link></h3>}
                 {role === 'seller' &&
                  <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} fiat={fiat} />
                 }

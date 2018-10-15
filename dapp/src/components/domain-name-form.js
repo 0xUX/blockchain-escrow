@@ -5,15 +5,16 @@ import { Link, Redirect } from 'react-router-dom';
 import { Button, Form, FormGroup, Col } from 'reactstrap';
 import { updateDomain } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
-import { userIsAgent } from '../redux/selectors';
 import { PriceBreakdown, PriceInput, DomainInput } from './static';
 import { getPriceBreakdownInWei, precisionRound } from '../lib/util';
+import { DelayedSpinner } from './ui';
 
 
 class DomainNameForm extends Component {
     constructor(props, context) {
         super(props);
         this.contracts = context.drizzle.contracts;
+        this.whoamiKey = this.contracts.Escrow.methods.whois.cacheCall(props.account);
         this.web3 = context.drizzle.web3;
     }
 
@@ -37,10 +38,13 @@ class DomainNameForm extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        const { account, agentKey, domain, updateDomain } = this.props; // @@@ agentKey waarvandaan?
+        const { account, agentKey, domain, updateDomain } = this.props;
         if(!this.state.price || !domain) return;
-        if(!agentKey) {
-            const StackId = this.contracts.Escrow.methods.offerDirect.cacheSend(domain, this.web3.utils.toWei(this.state.price), {from: account});
+        let stackId = null;
+        if(agentKey) {
+            stackId = this.contracts.Escrow.methods.offerViaAgent.cacheSend(domain, this.web3.utils.toWei(this.state.price), agentKey, {from: account});
+        } else {
+            stackId = this.contracts.Escrow.methods.offerDirect.cacheSend(domain, this.web3.utils.toWei(this.state.price), {from: account});
             // // Use the dataKey to display the transaction status.
             // if (state.transactionStack[stackId]) {
             //     const txHash = state.transactionStack[stackId]
@@ -77,10 +81,13 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { agentKey, isAgent, fiat, domain, updateDomain, transactions, transactionStack } = this.props; // @@@ agentKey en isAgent
+        const { agentKey, fiat, domain, updateDomain, transactions, transactionStack, Escrow } = this.props;
         const { mode, done } = this.state;
         if(agentKey && done) return <Redirect to="/" />;
         if(mode === 'buy') return <Redirect to={`/domain/${domain}`} />;
+
+        if(!(this.whoamiKey in Escrow.whois)) return <DelayedSpinner />;
+        const { enrolled } = Escrow.whois[this.whoamiKey].value;
 
         let txs = []
 
@@ -129,7 +136,7 @@ class DomainNameForm extends Component {
                      </div>
                     }
                 </Form>
-                {mode === 'sell' && !agentKey && !isAgent &&
+                {mode === 'sell' && !agentKey && !enrolled &&
                  <div className="mt-5"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
                 }
             </div>
@@ -143,9 +150,7 @@ DomainNameForm.contextTypes = {
 
 DomainNameForm.propTypes = {
     account: PropTypes.string.isRequired,
-    //addAsset: PropTypes.func.isRequired, // @@@
-    isAgent: PropTypes.bool.isRequired, // @@@
-    agentKey: PropTypes.string, // @@@
+    agentKey: PropTypes.string,
     fiat: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
     updateDomain: PropTypes.func.isRequired,
@@ -155,9 +160,7 @@ DomainNameForm.propTypes = {
 };
 
 const mapStateToProps = state => {
-    const isAgent = false; // userIsAgent(state); // @@@
     return { account: state.accounts[0],
-             isAgent,  // @@@
              fiat: state.fiat,
              domain: state.domain,
              Escrow: state.contracts.Escrow,

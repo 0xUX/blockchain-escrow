@@ -2,47 +2,46 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import DomainNameForm from './domain-name-form';
+import UserAssets from './user-assets';
+import { AgentLink } from './static';
 
-// @@@@
-//import UserAssets from './user-assets';
-//import { AgentLink } from './static';
-//import { userIsAgent } from '../redux/selectors';
 
 class Home extends Component {
+    constructor(props, context) {
+        super(props);
+        this.contracts = context.drizzle.contracts;
+        this.whoamiKey = this.contracts.Escrow.methods.whois.cacheCall(props.account);
+    }
     render() {
-        // @@@@
-        //const { currentUser, isAgent } = this.props;
+        const { Escrow, account } = this.props;
+        if(!(this.whoamiKey in Escrow.whois)) return <DelayedSpinner />;
+        const { enrolled } = Escrow.whois[this.whoamiKey].value;
 
-
-        const { web3status, web3contracts, web3accounts, web3accountBalances, web3transactions, web3transactionStack } = this.props;
-
-//        console.log(this.props);
+        console.log('Home RENDER');
 
         return (
             <div>
-                {/* @@@@@@@@@@@@@@@@ */}
-                {/* isAgent && <AgentLink agentKey={currentUser} /> */}
+                {enrolled && <AgentLink agentKey={account} />}
                 <DomainNameForm />
-                {/* <UserAssets /> */}
+                <UserAssets />
             </div>
         );
     }
 };
 
-Home.propTypes = {
+Home.contextTypes = {
+    drizzle: PropTypes.object
+};
 
+Home.propTypes = {
+    Escrow: PropTypes.object.isRequired,
+    account: PropTypes.string.isRequired
 };
 
 const mapStateToProps = state => {
-    // @@@@
-    //const isAgent = userIsAgent(state);
-    return { //currentUser: state.currentUser, isAgent,
-             web3status: state.web3,
-             web3contracts: state.contracts,
-             web3accounts: state.accounts,
-             web3accountBalances: state.accountBalances,
-             web3transactions: state.transactions,
-             web3transactionStack: state.transactionStack
+    return {
+        Escrow: state.contracts.Escrow,
+        account: state.accounts[0]
     };
 };
 

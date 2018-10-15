@@ -2,8 +2,6 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Button, Form, FormGroup, Input } from 'reactstrap';
-import { updateBalance } from '../redux/actions';
-import { getUserBalance } from '../redux/selectors';
 import { AmountPlusFiat } from './ui.js';
 import { CurrencySelector } from './static';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
@@ -29,16 +27,17 @@ class Balance extends Component {
 };
 
 Balance.propTypes = {
-    currentUser: PropTypes.string.isRequired,
-    balance: PropTypes.string.isRequired,
-    updateBalance: PropTypes.func.isRequired,
+    Escrow: PropTypes.object.isRequired,
     fiat: PropTypes.object.isRequired,
     currency: PropTypes.string.isRequired
 };
 
 const mapStateToProps = state => {
-    const balance = getUserBalance(state);
-    return { currentUser: state.currentUser, balance, fiat: state.fiat, currency: state.currency };
+    return {
+        Escrow: state.contracts.Escrow,
+        fiat: state.fiat,
+        currency: state.currency
+    };
 };
 
-export default drizzleConnect(Balance, mapStateToProps, { updateBalance });
+export default drizzleConnect(Balance, mapStateToProps);

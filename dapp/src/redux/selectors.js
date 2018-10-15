@@ -1,34 +1,26 @@
-// import _ from 'lodash-es';
-//
-// export const getUserAssets = store => {
-//     const userAssets = {};
-//     _.forOwn(store.assets, function(value, key) {
-//         if (value.seller == store.currentUser) {
-//             userAssets[key] = value;
-//         }
-//     });
-//     return userAssets;
-// };
-//
-// export const getAgentAssets = store => {
-//     const agentAssets = {};
-//     _.forOwn(store.assets, function(value, key) {
-//         if (value.agent == store.currentUser) {
-//             agentAssets[key] = value;
-//         }
-//     });
-//     return agentAssets;
-// };
+import _ from 'lodash-es';
+
+
+export const getUserAssets = store => {
+    const user = store.accounts[0];
+    const details = store.contracts.Escrow.details;
+    const userAssets = {};
+    _.forOwn(details, function(value, key) {
+        const dn = value.args[0];
+        userAssets[dn] = key;
+    });
+
+    return userAssets;
+};
+
+
 //
 // export const getUserBalance = store => {
 //     const user = store.currentUser;
 //     if(!user || !store.balances[user]) return '0';
 //     return store.balances[user];
 // };
-//
-// export const userIsAgent = store => {
-//     return userExists(store) && store.currentUser.indexOf('AGENT') === 0;
-// };
+
 
 export const userExists = store => {
     return !!store.accounts[0];
@@ -37,6 +29,7 @@ export const userExists = store => {
 // export const userIsOwner = store => {
 //     return userExists(store) && store.currentUser === 'OWNER';
 // };
+
 //
 // export const getAsset = (store, dn) => {
 //     return store.assets[dn] || {

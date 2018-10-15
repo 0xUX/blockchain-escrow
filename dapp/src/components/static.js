@@ -1,9 +1,10 @@
 import React from "react";
 import PropTypes from 'prop-types';
+import _ from 'lodash-es';
 import { drizzleConnect } from 'drizzle-react';
 import { Link } from 'react-router-dom';
 import { Button, ButtonGroup, Form, FormGroup, Input, Col } from 'reactstrap';
-import { USERS, ASSET_STATES, CURRENCIES, DISPLAY_ETHER_DECIMALS } from "../constants";
+import { ASSET_STATES, CURRENCIES, DISPLAY_ETHER_DECIMALS } from "../constants";
 import { getPriceBreakdownInWei, getSalesPriceInEther, precisionRound } from '../lib/util';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 import { FIAT_CALL_REQUEST, SET_CURRENCY } from '../redux/action-types';
@@ -18,21 +19,25 @@ export const NoMatch = ({ location }) => (
 
 export const AgentLink = ({ agentKey }) => (
     <div className="card p-3 mt-1">
-        <div>Hello {USERS[agentKey]}! <Link to="/agent">My personal agent page >></Link></div>
+        <div>Hello {agentKey}! <Link to="/agent">My personal agent page >></Link></div>
     </div>
 );
 
 
-export const AssetInfo = ( { asset } ) => (
-    <ul>
-        <li>Status: {ASSET_STATES[asset.state]}</li>
-        <li>Escrow agent: {asset.agent ? USERS[asset.agent] : '-'}</li>
-        <li>Net price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.price))} /></li>
-        <li>Escrow fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.escrowfee))} /></li>
-        <li>Handling fee: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.handlingfee))} /></li>
-        <li>Sales price: <AmountPlusFiat amountInEther={getSalesPriceInEther(asset)} /></li>
-    </ul>
-);
+export const AssetInfo = ( { asset } ) => {
+    const state = asset.forsale ? 'forsale' : (asset.paid ? 'paid' : 'unknown'); //@@@
+
+    const agent = Number(asset.agent) ? asset.agent : '-';
+
+    return (
+        <ul>
+            <li>Status: {ASSET_STATES[state]}</li>
+            <li>Escrow agent: {agent}</li>
+            <li>Net price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.netprice))} /></li>
+            <li>Sales price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.price))} /></li>
+        </ul>
+    );
+};
 
 
 export const PriceBreakdown = ({ price, agentKey }) => {

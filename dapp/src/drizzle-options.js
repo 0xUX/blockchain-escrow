@@ -19,7 +19,7 @@ const drizzleOptions = {
         }
     ],
     events: {
-        Escrow: ['Offered', 'Retracted', 'Bought', 'FundsReleased']
+        Escrow: ['Offered', 'Retracted', 'Bought', 'FundsReleased', 'Involve']
     },
     polls: {
         accounts: 1500
