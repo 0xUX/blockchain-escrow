@@ -85,7 +85,7 @@ contract Escrow {
 
     address contract_owner;                 // owner of this contract
     address handling_wallet;                // where eth for handling fees goes
-    uint8 handling_permillage;              // owner fee on transactions
+    uint8 public handling_permillage;       // owner fee on transactions
     uint constant min_blocks = 10;          // minimum number of blocks before payout
 
     mapping(address => uint) balances;      // wallets of all participants (including contract owner)
@@ -244,8 +244,8 @@ contract Escrow {
         returns (
             address seller, address agent, address buyer,
             uint netprice, uint price,
-            uint8 handling_pm,
-            uint8 escrow_pm,
+//            uint8 handling_pm,
+//            uint8 escrow_pm,
             string state
         ) {
         bytes32 hash = keccak256(bytes(name));
@@ -258,8 +258,8 @@ contract Escrow {
         buyer = a.buyer;
         netprice = a.price;
         price = a.price + a.escrowfee + a.handlingfee;
-        handling_pm = handling_permillage;
-        escrow_pm = agents[a.agent];
+//        handling_pm = handling_permillage;
+//        escrow_pm = agents[a.agent];
         state = stateRepr[uint(a.state)];
     }
 

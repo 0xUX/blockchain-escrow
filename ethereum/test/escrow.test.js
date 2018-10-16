@@ -161,8 +161,8 @@ describe('Escrow', () => {
         assert.strictEqual(info['state'], "FORSALE"); // should now be for sale
         assert.strictEqual(info['netprice'], String(A_PRICE));
         assert.strictEqual(info['price'], String(A_PRICE_AGENT_TTL));
-        assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
-        assert.strictEqual(info['escrow_pm'], String(AGENT_FEE));
+//         assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
+//         assert.strictEqual(info['escrow_pm'], String(AGENT_FEE));
         // check the generated Offered event
         var events = await contract.getPastEvents('Offered');
         assert.strictEqual(events[0].returnValues['agent'], agent);
@@ -248,8 +248,8 @@ describe('Escrow', () => {
         assert.strictEqual(info['seller'], seller);
         assert.strictEqual(info['agent'], ADDR0); // not via agent
         assert.strictEqual(info['buyer'], buyer); // to designated buyer
-        assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
-        assert.strictEqual(info['escrow_pm'], "0");
+//         assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
+//         assert.strictEqual(info['escrow_pm'], "0");
         // now a bystander tries to acquire it, should fail
         try {
             await contract.methods.buy(A_NAME).send({ from: bystander, value: INITBAL });
@@ -275,8 +275,8 @@ describe('Escrow', () => {
         assert.strictEqual(info['seller'], seller);
         assert.strictEqual(info['agent'], agent); // via agent
         assert.strictEqual(info['buyer'], buyer); // to designated buyer
-        assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
-        assert.strictEqual(info['escrow_pm'], String(AGENT_FEE));
+//         assert.strictEqual(info['handling_pm'], String(CONTRACT_FEE));
+//         assert.strictEqual(info['escrow_pm'], String(AGENT_FEE));
         try {
             await contract.methods.buy(A_NAME).send({ from: bystander, value: INITBAL });
             assert.fail() // should not be reached
