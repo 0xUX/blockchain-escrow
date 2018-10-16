@@ -17,6 +17,24 @@ yarn start
 
 Visit the development site at [localhost:8080](http://localhost:8080/).
 
+## Using a local development blockchain
+
+```
+nvm use 10
+ganache-cli -b 3
+```
+
+Now we have an RPC interface on [127.0.0.1:8545](http://127.0.0.1:8545/).
+
+On MetaMask import a couple of accounts (by private key). Copy the private keys from the ganache-cli output. Make sure one account is named `owner` (the one you deployed with) and one `agent`.
+
+Copy the escrow.sol source to Remix and deploy it on "Injected web3". Copy the address of the contract and set it to `ADDRESS` in `constants.js.`
+Also set the `agent` address to `AGENTS` in that file.
+
+Now make sure the MetaMask network is set to `Private Network`.
+
+Finally figure out the networkId, e.g. by adding `console.log(networkId);` in the `Loading` compoment, and update the corresponding constant in `constants.js`.
+
 ## Build for production
 
 To build for production:

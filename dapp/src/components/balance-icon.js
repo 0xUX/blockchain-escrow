@@ -4,28 +4,27 @@ import { Button } from 'reactstrap';
 import { drizzleConnect } from 'drizzle-react';
 import { formatAmount } from '../lib/util';
 import { toggleBalance } from '../redux/actions';
-import { getUserBalance } from '../redux/selectors';
-import { DelayedSpinner } from './ui';
 
 
 class BalanceIcon extends Component {
-    constructor(props, context) {
-        super(props);
-        this.contracts = context.drizzle.contracts;
-        this.web3 = context.drizzle.web3;
-        this.dataKey = this.contracts.Escrow.methods.myBalance.cacheCall();
+
+    state = { dataKey: null };
+
+    componentDidMount() {
+        const { Escrow } = this.context.drizzle.contracts;
+        const dataKey = Escrow.methods["myBalance"].cacheCall();
+        this.setState({ dataKey });
     }
 
     render() {
         const { toggleBalance, Escrow } = this.props;
+        const { web3 } = this.context.drizzle;
 
-        // If the cache key we received earlier isn't in the store yet; the initial value is still being fetched.
-        if(!(this.dataKey in Escrow.myBalance)) return <DelayedSpinner />;
-        const balance = Escrow.myBalance[this.dataKey].value;
-
+        const balance = Escrow.myBalance[this.state.dataKey];
+        if(!balance) return null;
         return (
             <Button outline size="sm" onClick={toggleBalance}>
-                {formatAmount('eth', Number(this.web3.utils.fromWei(balance)))}
+                {formatAmount('eth', Number(web3.utils.fromWei(balance.value)))}
             </Button>
         );
     }

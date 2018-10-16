@@ -4,6 +4,7 @@ import { drizzleConnect } from 'drizzle-react';
 import DomainNameForm from './domain-name-form';
 import UserAssets from './user-assets';
 import { AgentLink } from './static';
+import { DelayedSpinner } from './ui';
 
 
 class Home extends Component {

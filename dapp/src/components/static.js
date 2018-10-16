@@ -25,13 +25,11 @@ export const AgentLink = ({ agentKey }) => (
 
 
 export const AssetInfo = ( { asset } ) => {
-    const state = asset.forsale ? 'forsale' : (asset.paid ? 'paid' : 'unknown'); //@@@
-
     const agent = Number(asset.agent) ? asset.agent : '-';
 
     return (
         <ul>
-            <li>Status: {ASSET_STATES[state]}</li>
+            <li>Status: {ASSET_STATES[asset.state]}</li>
             <li>Escrow agent: {agent}</li>
             <li>Net price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.netprice))} /></li>
             <li>Sales price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(asset.price))} /></li>
