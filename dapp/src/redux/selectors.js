@@ -14,12 +14,11 @@ export const getUserAssets = store => {
 };
 
 
-//
-// export const getUserBalance = store => {
-//     const user = store.currentUser;
-//     if(!user || !store.balances[user]) return '0';
-//     return store.balances[user];
-// };
+export const getMyBalance = store => {
+    const myBalance = store.contracts.Escrow.myBalance;
+    if(myBalance && myBalance['0x0']) return myBalance['0x0'];
+    return null;
+};
 
 
 export const userExists = store => {

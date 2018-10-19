@@ -22,7 +22,7 @@ class Home extends Component {
 
         return (
             <div>
-                {enrolled && <AgentLink agentKey={account} />}
+                {enrolled && <AgentLink agentAccount={account} />}
                 <DomainNameForm />
                 <UserAssets />
             </div>

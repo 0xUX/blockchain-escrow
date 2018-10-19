@@ -14,9 +14,9 @@ export class Agent extends Component {
         super(props);
         this.contracts = context.drizzle.contracts;
         this.whoamiKey = this.contracts.Escrow.methods.whois.cacheCall(props.account);
-        this.agentKeys = {};
+        this.whoisKeys = {};
         for (let agent of AGENTS) {
-            this.agentKeys[agent] = this.contracts.Escrow.methods.whois.cacheCall(agent);
+            this.whoisKeys[agent] = this.contracts.Escrow.methods.whois.cacheCall(agent);
         }
     }
 
@@ -27,8 +27,8 @@ export class Agent extends Component {
         let agentInfoRdy = false;
         const fees = [];
         for (let agent of AGENTS) {
-            if(this.agentKeys[agent] in Escrow.whois) {
-                fees[agent] = (Escrow.whois[this.agentKeys[agent]].value.permillage/10).toFixed(2);
+            if(this.whoisKeys[agent] in Escrow.whois) {
+                fees[agent] = (Escrow.whois[this.whoisKeys[agent]].value.permillage/10).toFixed(2);
             }
         }
         return (
@@ -41,7 +41,7 @@ export class Agent extends Component {
                      <p>Want to become an agent? Drop us an email!</p>
                      <p>Our top recommended agents:</p>
                      <ul>
-                         {Object.keys(this.agentKeys).map(agent => (
+                         {Object.keys(this.whoisKeys).map(agent => (
                              <li key={agent}>
                                  <Link to={`/agent/${agent}`}>{agent}</Link> (Fee: {fees[agent]}%)
                              </li>
@@ -75,25 +75,53 @@ Agent = drizzleConnect(Agent, mapStateToProps);
 
 
 export class SellViaAgent extends Component {
+    state = {
+        whoisKey: null
+    };
+
+    componentDidMount() {
+        const { match } = this.props;
+        const { agentAccount } = match.params;
+        const { Escrow } = this.context.drizzle.contracts;
+        const whoisKey = Escrow.methods.whois.cacheCall(agentAccount);
+        this.setState({ whoisKey });
+    }
+
     render() {
-        const { account, match } = this.props;
-        const { agentKey } = match.params;
-        if(account === agentKey) return <Redirect to="/agent" />;
+        const { account, match, Escrow } = this.props;
+        const { agentAccount } = match.params;
+
+        // if current user is the agent go to custom agent page
+        if(account === agentAccount) return <Redirect to="/agent" />;
+
+        // check if agentAccount is indeed an agent
+        const whois = Escrow.whois[this.state.whoisKey];
+        if(!whois) return null;
+        if(!whois.value.enrolled) return <Redirect to="/agent" />;
+
         return (
             <div>
-              <h1>Agent {agentKey}</h1>
-              <DomainNameForm agentKey={agentKey} />
+                <h1>Agent {agentAccount}</h1>
+                <DomainNameForm agentAccount={agentAccount} />
             </div>
         );
     }
 }
 
+SellViaAgent.contextTypes = {
+    drizzle: PropTypes.object
+};
+
 SellViaAgent.propTypes = {
-    account: PropTypes.string.isRequired
+    account: PropTypes.string.isRequired,
+    Escrow: PropTypes.object.isRequired
 };
 
 const mapStateToProps2 = state => {
-    return { account: state.accounts[0] };
+    return {
+        account: state.accounts[0],
+        Escrow: state.contracts.Escrow
+    };
 };
 
 SellViaAgent = drizzleConnect(SellViaAgent, mapStateToProps2);

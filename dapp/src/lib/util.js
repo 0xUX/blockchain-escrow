@@ -1,23 +1,23 @@
 import { AGENT_FEES, HANDLING_FEE, DISPLAY_ETHER_DECIMALS } from '../constants';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 
-export const getPriceBreakdownInWei = (priceInEther, agentKey) => {
+export const getPriceBreakdownInWei = (priceInEther, agentAccount) => {
     if(!priceInEther) priceInEther = '0';
 
-    console.log(priceInEther, agentKey, AGENT_FEES[agentKey]);
+    console.log(priceInEther, agentAccount, AGENT_FEES[agentAccount]);
 
     const netPrice = web3utils.toWei(priceInEther, 'ether');
     const netPriceBN = web3utils.toBN(netPrice); // needed for math with big wei numbers
-    const escrowfee = agentKey ? netPriceBN.divn(1000).muln(AGENT_FEES[agentKey]) : web3utils.toBN('0');
+    const escrowfee = agentAccount ? netPriceBN.divn(1000).muln(AGENT_FEES[agentAccount]) : web3utils.toBN('0');
     const handlingfee = netPriceBN.divn(1000).muln(HANDLING_FEE);
     const salesPrice = netPriceBN.add(escrowfee).add(handlingfee);
     return { netPrice, escrowfee:escrowfee.toString(10), handlingfee: handlingfee.toString(10), salesPrice: salesPrice.toString(10) };
 };
 
-export const getPriceBreakdownInEther = (priceInEther, agentKey) => {
+export const getPriceBreakdownInEther = (priceInEther, agentAccount) => {
     if(typeof priceInEther !== 'number') console.warn('priceInEther must be a number. Only use BN or strings for high precision calc.');
     if(!priceInEther) priceInEther = 0;
-    const escrowfee = agentKey ? priceInEther / 1000 * AGENT_FEES[agentKey] : 0;
+    const escrowfee = agentAccount ? priceInEther / 1000 * AGENT_FEES[agentAccount] : 0;
     const handlingfee = priceInEther / 1000 * HANDLING_FEE;
     const salesPrice = priceInEther + escrowfee + handlingfee;
     return { priceInEther, escrowfee, handlingfee, salesPrice };

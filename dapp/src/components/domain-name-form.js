@@ -2,10 +2,11 @@ import React, { Component } from "react";
 import PropTypes from 'prop-types';
 import { drizzleConnect } from 'drizzle-react';
 import { Link, Redirect } from 'react-router-dom';
-import { Button, Form, FormGroup, Col } from 'reactstrap';
+import { Button, Form, FormGroup, Input, Col } from 'reactstrap';
 import { updateDomain } from '../redux/actions';
 import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
-import { PriceBreakdown, PriceInput, DomainInput } from './static';
+import { PriceBreakdown } from './static';
+import { PriceInput } from './price-input';
 import { getPriceBreakdownInWei, precisionRound } from '../lib/util';
 import { DelayedSpinner } from './ui';
 
@@ -15,6 +16,7 @@ class DomainNameForm extends Component {
         super(props);
         this.contracts = context.drizzle.contracts;
         this.whoamiKey = this.contracts.Escrow.methods.whois.cacheCall(props.account);
+        if(props.agentAccount) this.agentDataKey = this.contracts.Escrow.methods.whois.cacheCall(props.agentAccount);
         this.web3 = context.drizzle.web3;
     }
 
@@ -38,11 +40,11 @@ class DomainNameForm extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        const { account, agentKey, domain, updateDomain } = this.props;
+        const { account, agentAccount, domain, updateDomain } = this.props;
         if(!this.state.price || !domain) return;
         let stackId = null;
-        if(agentKey) {
-            stackId = this.contracts.Escrow.methods.offerViaAgent.cacheSend(domain, this.web3.utils.toWei(this.state.price), agentKey, {from: account});
+        if(agentAccount) {
+            stackId = this.contracts.Escrow.methods.offerViaAgent.cacheSend(domain, this.web3.utils.toWei(this.state.price), agentAccount, {from: account});
         } else {
             stackId = this.contracts.Escrow.methods.offerDirect.cacheSend(domain, this.web3.utils.toWei(this.state.price), {from: account});
             // // Use the dataKey to display the transaction status.
@@ -81,13 +83,15 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { agentKey, fiat, domain, updateDomain, transactions, transactionStack, Escrow } = this.props;
+        const { agentAccount, fiat, domain, updateDomain, transactions, transactionStack, Escrow } = this.props;
         const { mode, done } = this.state;
-        if(agentKey && done) return <Redirect to="/" />;
+        if(agentAccount && done) return <Redirect to="/" />;
         if(mode === 'buy') return <Redirect to={`/domain/${domain}`} />;
 
-        if(!(this.whoamiKey in Escrow.whois)) return <DelayedSpinner />;
+        if(!(this.whoamiKey in Escrow.whois)) return null;
         const { enrolled } = Escrow.whois[this.whoamiKey].value;
+
+        //if(agentAccount) // @@@@@@@@@ get agent permillage and pass on to getPriceBreakdownInWei etc
 
         let txs = []
 
@@ -112,10 +116,10 @@ class DomainNameForm extends Component {
 
         return (
             <div className="card p-3 mt-1">
-                {(agentKey || mode === 'sell') && <h3>Sell a domain name:</h3>}
+                {(agentAccount || mode === 'sell') && <h3>Sell a domain name:</h3>}
                 <Form  onSubmit={this.handleSubmit}>
                     <DomainInput />
-                    {!mode && !agentKey &&
+                    {!mode && !agentAccount &&
                      <FormGroup row>
                          <Col sm={6} className="mt-3">
                              <Button color="success" size="lg" onClick={() => this.setState({ mode: 'buy' }) } block disabled={!this.isFQDN()} >buy</Button>
@@ -125,18 +129,18 @@ class DomainNameForm extends Component {
                          </Col>
                      </FormGroup>
                     }
-                    {(agentKey || mode === 'sell') &&
+                    {(agentAccount || mode === 'sell') &&
                      <div>
                          <PriceInput price={this.state.price}
                                      fiatInput={this.state.fiatInput}
                                      activeInput={this.state.activeInput}
                                      handlePriceChange={this.handlePriceChange} />
                          <Button type="submit" color="success">create offer</Button>
-                         <PriceBreakdown price={this.state.price} agentKey={agentKey} />
+                         <PriceBreakdown price={this.state.price} agentAccount={agentAccount} />
                      </div>
                     }
                 </Form>
-                {mode === 'sell' && !agentKey && !enrolled &&
+                {mode === 'sell' && !agentAccount && !enrolled &&
                  <div className="mt-5"><Link to="/agent">Limit your risk, sell via an agent >></Link></div>
                 }
             </div>
@@ -150,7 +154,7 @@ DomainNameForm.contextTypes = {
 
 DomainNameForm.propTypes = {
     account: PropTypes.string.isRequired,
-    agentKey: PropTypes.string,
+    agentAccount: PropTypes.string,
     fiat: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
     updateDomain: PropTypes.func.isRequired,
@@ -170,3 +174,37 @@ const mapStateToProps = state => {
 };
 
 export default drizzleConnect(DomainNameForm, mapStateToProps, { updateDomain });
+
+
+let DomainInput = props => {
+    const { domain, updateDomain } = props;
+
+    const handleChange = (e) => {
+        const value = e.target.value.trim();
+        props.updateDomain(value);
+    };
+
+    return (
+        <FormGroup row>
+            <Col sm={12}>
+                <Input name="domain" id="domain"
+                       placeholder="enter domain name"
+                       onChange={handleChange}
+                       value={props.domain}
+                />
+                <small>Enter a FQDN, for example: yahoo.com</small>
+            </Col>
+        </FormGroup>
+    );
+};
+
+DomainInput.propTypes = {
+    domain: PropTypes.string.isRequired,
+    updateDomain: PropTypes.func.isRequired
+};
+
+const mapStateToPropsDomain = state => {
+    return { domain: state.domain };
+};
+
+DomainInput = drizzleConnect(DomainInput, mapStateToPropsDomain, { updateDomain });

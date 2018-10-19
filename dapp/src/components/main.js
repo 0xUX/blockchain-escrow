@@ -26,12 +26,19 @@ class Body extends Component {
     }
 
     async componentDidMount() {
+        const { onRequestFiat, account } = this.props;
+        const { Escrow } = this.context.drizzle.contracts;
+
         // get fiat conversion rate
-        const { onRequestFiat } = this.props;
         onRequestFiat('USD');
 
         // Get past logs, uses the metamask provider
-        this.getPastLogs();
+        await this.getPastLogs();
+
+        // Prefetch essential data, to be retrieved via selectors
+        Escrow.methods.myBalance.cacheCall();
+        Escrow.methods.handling_permillage.cacheCall();
+        Escrow.methods.whois.cacheCall(account);
     }
 
     getPastLogs = async () => {
@@ -59,7 +66,7 @@ class Body extends Component {
         const accountTopic = web3.utils.padLeft(account, 64);
         console.log(involveEventABI);
         const involveTopic0 = web3.eth.abi.encodeEventSignature(involveEventABI);
-        console.log(involveTopic0, accountTopic);
+        console.log(involveTopic0, accountTopic, ADDRESS);
 
         // try {
         // Get past logs for Involve(*, account)
@@ -151,7 +158,8 @@ Body.propTypes = {
     fiat: PropTypes.object.isRequired,
     showBalance: PropTypes.bool.isRequired,
     onRequestFiat: PropTypes.func.isRequired,
-    account: PropTypes.string.isRequired
+    account: PropTypes.string.isRequired,
+    Escrow: PropTypes.object.isRequired
 };
 
 const mapStateToProps = state => {
@@ -161,6 +169,7 @@ const mapStateToProps = state => {
              fiat: state.fiat,
              showBalance: state.showBalance,
              account: state.accounts[0],
+             Escrow: state.contracts.Escrow
            };
 };
 

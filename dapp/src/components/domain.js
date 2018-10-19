@@ -6,9 +6,11 @@ import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
 import { getAsset, getRole, getUserBalance } from '../redux/selectors';
 import { ASSET_STATES, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
-import { AssetInfo, PriceInput, PriceBreakdown, CurrencySelector } from './static';
+import { AssetInfo, PriceBreakdown } from './static';
+import { PriceInput } from './price-input';
+import { CurrencySelector } from './currency-selector';
 import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei, precisionRound } from '../lib/util';
-import { AmountPlusFiat } from './ui.js';
+import { AmountPlusFiat } from './ui';
 import { utils as web3utils } from 'web3';  // for now @@@@@@
 
 const NotForSale = props => (
@@ -265,7 +267,7 @@ class SellerActions extends Component {
                                      handlePriceChange={this.handlePriceChange} />
                          <Button type="submit">update price</Button>
                      </Form>
-                     <PriceBreakdown price={this.state.price} agentKey={asset.agent} />
+                     <PriceBreakdown price={this.state.price} agentAccount={asset.agent} />
                      <Button className="mt-3" color="danger" onClick={this.retractOffer}>retract offer</Button>
                  </div>
                 }

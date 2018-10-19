@@ -4,23 +4,14 @@ import { Button } from 'reactstrap';
 import { drizzleConnect } from 'drizzle-react';
 import { formatAmount } from '../lib/util';
 import { toggleBalance } from '../redux/actions';
+import { getMyBalance } from '../redux/selectors';
 
 
 class BalanceIcon extends Component {
-
-    state = { dataKey: null };
-
-    componentDidMount() {
-        const { Escrow } = this.context.drizzle.contracts;
-        const dataKey = Escrow.methods["myBalance"].cacheCall();
-        this.setState({ dataKey });
-    }
-
     render() {
-        const { toggleBalance, Escrow } = this.props;
+        const { toggleBalance, balance } = this.props;
         const { web3 } = this.context.drizzle;
 
-        const balance = Escrow.myBalance[this.state.dataKey];
         if(!balance) return null;
         return (
             <Button outline size="sm" onClick={toggleBalance}>
@@ -36,14 +27,13 @@ BalanceIcon.contextTypes = {
 
 BalanceIcon.propTypes = {
     toggleBalance: PropTypes.func.isRequired,
-    Escrow: PropTypes.object.isRequired
+    balance: PropTypes.object
 };
 
 
 const mapStateToProps = state => {
-    return {
-        Escrow: state.contracts.Escrow
-    };
+    const balance = getMyBalance(state);
+    return { balance };
 };
 
 const BalanceIconContainer = drizzleConnect(BalanceIcon, mapStateToProps, { toggleBalance });
