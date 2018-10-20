@@ -4,7 +4,7 @@ import _ from 'lodash-es';
 import { drizzleConnect } from 'drizzle-react';
 import { Link } from 'react-router-dom';
 import { getUserAssets } from '../redux/selectors';
-import { AssetInfo } from './static';
+import { AssetInfo } from './asset-info';
 import { ASSET_STATES } from '../constants';
 
 class UserAssets extends Component {

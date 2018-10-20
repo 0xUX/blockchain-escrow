@@ -4,14 +4,15 @@ import { Link } from 'react-router-dom';
 import { drizzleConnect } from 'drizzle-react';
 import { Button, Form, FormGroup, Input } from 'reactstrap';
 import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
-import { getAsset, getRole, getUserBalance } from '../redux/selectors';
+import { getAsset, getRole, getMyBalance } from '../redux/selectors';
 import { ASSET_STATES, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
-import { AssetInfo, PriceBreakdown } from './static';
+import { AssetInfo } from './asset-info';
+import PriceBreakdown from './price-breakdown';
 import { PriceInput } from './price-input';
 import { CurrencySelector } from './currency-selector';
 import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei, precisionRound } from '../lib/util';
 import { AmountPlusFiat } from './ui';
-import { utils as web3utils } from 'web3';  // for now @@@@@@
+
 
 const NotForSale = props => (
     <div className="card p-3 mt-1">
@@ -22,10 +23,11 @@ const NotForSale = props => (
 class Domain extends Component {
     render() {
         const { match, currentUser, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance, fiat } = this.props;
+        const { web3 } = this.context.drizzle;
         const { domain } = match.params;
         const header = <h1>{ASSET_STATES[asset.state]}: <a href={`https://whois.domaintools.com/${domain}`} target="_blank">{domain}</a></h1>;
         if(asset.state === 'NOTFORSALE') return <div>{header}<NotForSale domain={domain} /></div>;
-        const cost = getSalesPriceInEther(asset);
+        const cost = getSalesPriceInEther(web3, asset);
         return (
             <div>
                 {header}
@@ -48,6 +50,10 @@ class Domain extends Component {
     }
 };
 
+Domain.contextTypes = {
+    drizzle: PropTypes.object
+};
+
 Domain.propTypes = {
     currentUser: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
@@ -64,7 +70,8 @@ class ProspectActions extends Component {
 
     buy = () => {
         const { currentUser, balance, asset, updateBalance, updateAssetState, domain } = this.props;
-        const cost = getSalesPriceInWei(asset);
+        const { web3 } = this.context.drizzle;
+        const cost = getSalesPriceInWei(web3, asset);
 
         // assume the transaction has exactly the value needed to pay
         const value = Math.max(cost - balance, 0);
@@ -82,17 +89,19 @@ class ProspectActions extends Component {
 
     render() {
         const { balance, asset } = this.props;
-        const cost = getSalesPriceInWei(asset);
-        const required = web3utils.toBN(String(cost)).sub(web3utils.toBN(String(balance))).toString(10);
+        const { web3 } = this.context.drizzle;
+
+        const cost = getSalesPriceInWei(web3, asset);
+        const required = web3.utils.toBN(String(cost)).sub(web3.utils.toBN(String(balance))).toString(10);
         return (
             <div className="card p-3 mt-1">
                 {asset.state === 'FORSALE' ?
                  <div>
                      <p>Buy this domain:</p>
                      <ul>
-                         <li>Domain price: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(cost))} /></li>
-                         <li>Current balance: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(balance))} /></li>
-                         {Number(required) > 0 && <li>Additional Ether required: <AmountPlusFiat amountInEther={Number(web3utils.fromWei(required))} /></li>}
+                         <li>Domain price: <AmountPlusFiat amountInEther={Number(web3.utils.fromWei(cost))} /></li>
+                         <li>Current balance: <AmountPlusFiat amountInEther={Number(web3.utils.fromWei(balance))} /></li>
+                         {Number(required) > 0 && <li>Additional Ether required: <AmountPlusFiat amountInEther={Number(web3.utils.fromWei(required))} /></li>}
                      </ul>
                      <div><Button color="success" onClick={this.buy}>buy</Button></div>
                  </div> :
@@ -101,6 +110,10 @@ class ProspectActions extends Component {
             </div>
         );
     }
+};
+
+ProspectActions.contextTypes = {
+    drizzle: PropTypes.object
 };
 
 ProspectActions.propTypes = {
@@ -212,8 +225,13 @@ AgentActions.propTypes = {
 
 
 class SellerActions extends Component {
+    constructor(props, context) {
+        super(props);
+        this.web3 = context.drizzle.web3;
+    }
+
     state = {
-        price: web3utils.fromWei(this.props.asset.price),
+        price: this.web3.utils.fromWei(this.props.asset.price),
         fiatInput: '',
         activeInput: null // either eth or fiat, field we're typing in
     }
@@ -222,7 +240,7 @@ class SellerActions extends Component {
         e.preventDefault();
         const { asset, domain, updateAssetPrice } = this.props;
         const price = this.state.price;
-        const { netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(price, asset.agent);
+        const { netPrice, escrowfee, handlingfee } = getPriceBreakdownInWei(this.web3, price, asset.agent);
         updateAssetPrice(domain, netPrice, escrowfee, handlingfee);
     }
 
@@ -276,6 +294,10 @@ class SellerActions extends Component {
     }
 };
 
+SellerActions.contextTypes = {
+    drizzle: PropTypes.object
+};
+
 SellerActions.propTypes = {
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
@@ -288,7 +310,7 @@ const mapStateToProps = (state, props) => {
     const { domain } = props.match.params;
     const asset = getAsset(state, domain);
     const role = getRole(state, domain);
-    const balance = getUserBalance(state);
+    const balance = getMyBalance(state);
     return { currentUser: state.currentUser, asset, role, balance, fiat: state.fiat };
 };
 

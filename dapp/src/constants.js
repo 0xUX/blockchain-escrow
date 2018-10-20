@@ -1,16 +1,9 @@
-export const AGENT_FEES = { // @@@ replace with call to contract
-    '0x6c5b75696fe3c78e6b151180b38d9905098b7167': 10, // promilage
-    '0xd023dbe4b4d09537a60d655cf6969679dc732b6e': 20
-};
-
 export const ASSET_STATES = {
     FORSALE: 'For sale',
     PAID: 'Paid (in escrow)',
     RELEASED: 'Sold',
     NOTFORSALE: 'Not for sale'
 };
-
-export const HANDLING_FEE = 5; // promilage @@@
 
 export const CURRENCIES = ['AUD', 'CNY', 'EUR', 'GBP', 'JPY', 'USD'];
 

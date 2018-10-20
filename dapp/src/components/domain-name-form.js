@@ -4,10 +4,11 @@ import { drizzleConnect } from 'drizzle-react';
 import { Link, Redirect } from 'react-router-dom';
 import { Button, Form, FormGroup, Input, Col } from 'reactstrap';
 import { updateDomain } from '../redux/actions';
+import { getWhoAmI } from '../redux/selectors';
 import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
-import { PriceBreakdown } from './static';
+import PriceBreakdown from './price-breakdown';
 import { PriceInput } from './price-input';
-import { getPriceBreakdownInWei, precisionRound } from '../lib/util';
+import { precisionRound } from '../lib/util';
 import { DelayedSpinner } from './ui';
 
 
@@ -15,7 +16,7 @@ class DomainNameForm extends Component {
     constructor(props, context) {
         super(props);
         this.contracts = context.drizzle.contracts;
-        this.whoamiKey = this.contracts.Escrow.methods.whois.cacheCall(props.account);
+
         if(props.agentAccount) this.agentDataKey = this.contracts.Escrow.methods.whois.cacheCall(props.agentAccount);
         this.web3 = context.drizzle.web3;
     }
@@ -83,15 +84,21 @@ class DomainNameForm extends Component {
     }
 
     render() {
-        const { agentAccount, fiat, domain, updateDomain, transactions, transactionStack, Escrow } = this.props;
+        const { agentAccount, fiat, domain, updateDomain, transactions, transactionStack, Escrow, whoami } = this.props;
         const { mode, done } = this.state;
         if(agentAccount && done) return <Redirect to="/" />;
         if(mode === 'buy') return <Redirect to={`/domain/${domain}`} />;
 
-        if(!(this.whoamiKey in Escrow.whois)) return null;
-        const { enrolled } = Escrow.whois[this.whoamiKey].value;
+        if(!whoami) return null;
+        const { enrolled } = whoami.value;
 
-        //if(agentAccount) // @@@@@@@@@ get agent permillage and pass on to getPriceBreakdownInWei etc
+        let permillage = null;
+        if(agentAccount) {
+            const whoisAgent = Escrow.whois[this.agentDataKey];
+            if(!whoisAgent) return null;
+            permillage = whoisAgent.value.permillage
+            console.log(permillage);
+        }
 
         let txs = []
 
@@ -136,7 +143,7 @@ class DomainNameForm extends Component {
                                      activeInput={this.state.activeInput}
                                      handlePriceChange={this.handlePriceChange} />
                          <Button type="submit" color="success">create offer</Button>
-                         <PriceBreakdown price={this.state.price} agentAccount={agentAccount} />
+                         <PriceBreakdown price={this.state.price} agentAccount={agentAccount} agentPermillage={permillage} />
                      </div>
                     }
                 </Form>
@@ -160,17 +167,20 @@ DomainNameForm.propTypes = {
     updateDomain: PropTypes.func.isRequired,
     Escrow: PropTypes.object.isRequired,
     transactions: PropTypes.object.isRequired,
-    transactionStack: PropTypes.array.isRequired
+    transactionStack: PropTypes.array.isRequired,
+    whoami: PropTypes.object
 };
 
 const mapStateToProps = state => {
+    const whoami = getWhoAmI(state);
     return { account: state.accounts[0],
              fiat: state.fiat,
              domain: state.domain,
              Escrow: state.contracts.Escrow,
              transactions: state.transactions,
-             transactionStack: state.transactionStack
-           };
+             transactionStack: state.transactionStack,
+             whoami
+    };
 };
 
 export default drizzleConnect(DomainNameForm, mapStateToProps, { updateDomain });

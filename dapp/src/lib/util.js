@@ -1,36 +1,36 @@
-import { AGENT_FEES, HANDLING_FEE, DISPLAY_ETHER_DECIMALS } from '../constants';
-import { utils as web3utils } from 'web3';  // for now @@@@@@
+import { DISPLAY_ETHER_DECIMALS } from '../constants';
 
-export const getPriceBreakdownInWei = (priceInEther, agentAccount) => {
+
+export const getPriceBreakdownInWei = (web3, priceInEther, agentAccount, handlingPermillage, agentPermillage) => {
     if(!priceInEther) priceInEther = '0';
 
-    console.log(priceInEther, agentAccount, AGENT_FEES[agentAccount]);
+    console.log(web3, priceInEther, agentAccount, agentPermillage); // @@@
 
-    const netPrice = web3utils.toWei(priceInEther, 'ether');
-    const netPriceBN = web3utils.toBN(netPrice); // needed for math with big wei numbers
-    const escrowfee = agentAccount ? netPriceBN.divn(1000).muln(AGENT_FEES[agentAccount]) : web3utils.toBN('0');
-    const handlingfee = netPriceBN.divn(1000).muln(HANDLING_FEE);
+    const netPrice = web3.utils.toWei(priceInEther, 'ether');
+    const netPriceBN = web3.utils.toBN(netPrice); // needed for math with big wei numbers
+    const escrowfee = agentAccount ? netPriceBN.divn(1000).muln(agentPermillage) : web3.utils.toBN('0');
+    const handlingfee = netPriceBN.divn(1000).muln(handlingPermillage);
     const salesPrice = netPriceBN.add(escrowfee).add(handlingfee);
     return { netPrice, escrowfee:escrowfee.toString(10), handlingfee: handlingfee.toString(10), salesPrice: salesPrice.toString(10) };
 };
 
-export const getPriceBreakdownInEther = (priceInEther, agentAccount) => {
+export const getPriceBreakdownInEther = (priceInEther, agentAccount, handlingPermillage, agentPermillage) => {
     if(typeof priceInEther !== 'number') console.warn('priceInEther must be a number. Only use BN or strings for high precision calc.');
     if(!priceInEther) priceInEther = 0;
-    const escrowfee = agentAccount ? priceInEther / 1000 * AGENT_FEES[agentAccount] : 0;
-    const handlingfee = priceInEther / 1000 * HANDLING_FEE;
+    const escrowfee = agentAccount ? priceInEther / 1000 * agentPermillage : 0;
+    const handlingfee = priceInEther / 1000 * handlingPermillage;
     const salesPrice = priceInEther + escrowfee + handlingfee;
     return { priceInEther, escrowfee, handlingfee, salesPrice };
 };
 
-export const getSalesPriceInWei = (asset) => {
-    const priceInEther = web3utils.fromWei(asset.price);
+export const getSalesPriceInWei = (web3, asset) => {
+    const priceInEther = web3.utils.fromWei(asset.price);
     const { salesPrice } = getPriceBreakdownInWei(priceInEther, asset.agent);
     return salesPrice;
 };
 
-export const getSalesPriceInEther = (asset) => {
-    const priceInEther = Number(web3utils.fromWei(asset.price));
+export const getSalesPriceInEther = (web3, asset) => {
+    const priceInEther = Number(web3.utils.fromWei(asset.price));
     const { salesPrice } = getPriceBreakdownInEther(priceInEther, asset.agent);
     return salesPrice;
 };

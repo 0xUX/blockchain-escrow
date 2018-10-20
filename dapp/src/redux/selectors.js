@@ -21,6 +21,27 @@ export const getMyBalance = store => {
 };
 
 
+export const getHandlingPermillage = store => {
+    const handlingPermillage = store.contracts.Escrow.handling_permillage;
+    if(handlingPermillage && handlingPermillage['0x0']) return handlingPermillage['0x0'];
+    return null;
+};
+
+
+export const getWhoAmI = store => {
+    const account = store.accounts[0];
+    const whois = store.contracts.Escrow.whois;
+    if(whois) {
+        for (const [key, value] of Object.entries(whois)) {
+            if(value && value.args && value.args[0] === account) {
+                return value;
+            }
+        }
+    }
+    return null;
+};
+
+
 export const userExists = store => {
     return !!store.accounts[0];
 };

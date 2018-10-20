@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import _ from 'lodash-es';
 import { Link, Redirect } from 'react-router-dom';
 import { drizzleConnect } from 'drizzle-react';
+import { getWhoAmI } from '../redux/selectors';
 import { AGENTS } from "../constants";
 import UserAssets from './user-assets';
 import DomainNameForm from './domain-name-form';
@@ -13,7 +14,6 @@ export class Agent extends Component {
     constructor(props, context) {
         super(props);
         this.contracts = context.drizzle.contracts;
-        this.whoamiKey = this.contracts.Escrow.methods.whois.cacheCall(props.account);
         this.whoisKeys = {};
         for (let agent of AGENTS) {
             this.whoisKeys[agent] = this.contracts.Escrow.methods.whois.cacheCall(agent);
@@ -21,9 +21,9 @@ export class Agent extends Component {
     }
 
     render() {
-        const { Escrow } = this.props;
-        if(!(this.whoamiKey in Escrow.whois)) return <DelayedSpinner />;
-        const { enrolled } = Escrow.whois[this.whoamiKey].value;
+        const { Escrow, whoami } = this.props;
+        if(!whoami) return <DelayedSpinner />;
+        const { enrolled } = whoami.value;
         let agentInfoRdy = false;
         const fees = [];
         for (let agent of AGENTS) {
@@ -61,13 +61,14 @@ Agent.contextTypes = {
 
 Agent.propTypes = {
     Escrow: PropTypes.object.isRequired,
-    account: PropTypes.string.isRequired
+    whoami: PropTypes.object
 };
 
 const mapStateToProps = state => {
+    const whoami = getWhoAmI(state);
     return {
         Escrow: state.contracts.Escrow,
-        account: state.accounts[0]
+        whoami
     };
 };
 
