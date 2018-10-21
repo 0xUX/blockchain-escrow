@@ -16,14 +16,14 @@ export const getUserAssets = store => {
 
 export const getMyBalance = store => {
     const myBalance = store.contracts.Escrow.myBalance;
-    if(myBalance && myBalance['0x0']) return myBalance['0x0'];
+    if(myBalance && myBalance['0x0']) return myBalance['0x0']; // @@@ return .value
     return null;
 };
 
 
 export const getHandlingPermillage = store => {
     const handlingPermillage = store.contracts.Escrow.handling_permillage;
-    if(handlingPermillage && handlingPermillage['0x0']) return handlingPermillage['0x0'];
+    if(handlingPermillage && handlingPermillage['0x0']) return handlingPermillage['0x0'].value;
     return null;
 };
 

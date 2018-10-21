@@ -97,7 +97,6 @@ class DomainNameForm extends Component {
             const whoisAgent = Escrow.whois[this.agentDataKey];
             if(!whoisAgent) return null;
             permillage = whoisAgent.value.permillage
-            console.log(permillage);
         }
 
         let txs = []
