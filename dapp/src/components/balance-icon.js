@@ -15,7 +15,7 @@ class BalanceIcon extends Component {
         if(!balance) return null;
         return (
             <Button outline size="sm" onClick={toggleBalance}>
-                {formatAmount('eth', Number(web3.utils.fromWei(balance.value)))}
+                {formatAmount('eth', Number(web3.utils.fromWei(balance)))}
             </Button>
         );
     }
@@ -27,7 +27,7 @@ BalanceIcon.contextTypes = {
 
 BalanceIcon.propTypes = {
     toggleBalance: PropTypes.func.isRequired,
-    balance: PropTypes.object
+    balance: PropTypes.string
 };
 
 

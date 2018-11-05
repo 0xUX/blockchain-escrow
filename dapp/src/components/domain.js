@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { drizzleConnect } from 'drizzle-react';
 import { Button, Form, FormGroup, Input } from 'reactstrap';
-import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions';
+import { updateAssetPrice, updateAssetState, removeAsset, updateBalance } from '../redux/actions'; // @@@
 import { getAsset, getRole, getMyBalance } from '../redux/selectors';
-import { ASSET_STATES, AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
+import { ASSET_STATES, INPUT_ETHER_DECIMALS } from '../constants';
 import { AssetInfo } from './asset-info';
 import PriceBreakdown from './price-breakdown';
 import { PriceInput } from './price-input';
 import { CurrencySelector } from './currency-selector';
 import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei, precisionRound } from '../lib/util';
-import { AmountPlusFiat } from './ui';
+import { AmountPlusFiat, DelayedSpinner } from './ui';
 
 
 const NotForSale = props => (
@@ -22,12 +22,21 @@ const NotForSale = props => (
 
 class Domain extends Component {
     render() {
-        const { match, currentUser, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance, fiat } = this.props;
+        const { match, account, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance, fiat } = this.props;
         const { web3 } = this.context.drizzle;
         const { domain } = match.params;
+
+        console.log(asset);
+        if(asset === 404) return <div><h1>Not for sale</h1><NotForSale domain={domain} /></div>;
+        if(!asset) return <DelayedSpinner />;
+
+        console.log(asset);
+
         const header = <h1>{ASSET_STATES[asset.state]}: <a href={`https://whois.domaintools.com/${domain}`} target="_blank">{domain}</a></h1>;
-        if(asset.state === 'NOTFORSALE') return <div>{header}<NotForSale domain={domain} /></div>;
         const cost = getSalesPriceInEther(web3, asset);
+
+        if(!balance) return null;
+
         return (
             <div>
                 {header}
@@ -37,10 +46,10 @@ class Domain extends Component {
                  <SellerActions asset={asset} domain={domain} updateAssetPrice={updateAssetPrice} removeAsset={removeAsset} fiat={fiat} />
                 }
                 {role === 'prospect' &&
-                 <ProspectActions currentUser={currentUser} asset={asset} domain={domain} balance={balance} updateAssetState={updateAssetState} updateBalance={updateBalance} />
+                 <ProspectActions account={account} asset={asset} domain={domain} balance={balance} updateAssetState={updateAssetState} updateBalance={updateBalance} />
                 }
                 {role === 'buyer' &&
-                 <BuyerActions currentUser={currentUser} asset={asset} domain={domain} updateAssetState={updateAssetState} updateBalance={updateBalance} />
+                 <BuyerActions account={account} asset={asset} domain={domain} updateAssetState={updateAssetState} updateBalance={updateBalance} />
                 }
                 {role === 'agent' &&
                  <AgentActions asset={asset} domain={domain} updateAssetState={updateAssetState} removeAsset={removeAsset} updateBalance={updateBalance} />
@@ -55,10 +64,10 @@ Domain.contextTypes = {
 };
 
 Domain.propTypes = {
-    currentUser: PropTypes.string.isRequired,
+    account: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     role: PropTypes.string,
-    balance: PropTypes.string.isRequired,
+    balance: PropTypes.string,
     updateAssetPrice: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired,
     removeAsset: PropTypes.func.isRequired,
@@ -69,7 +78,7 @@ Domain.propTypes = {
 class ProspectActions extends Component {
 
     buy = () => {
-        const { currentUser, balance, asset, updateBalance, updateAssetState, domain } = this.props;
+        const { account, balance, asset, updateBalance, updateAssetState, domain } = this.props;
         const { web3 } = this.context.drizzle;
         const cost = getSalesPriceInWei(web3, asset);
 
@@ -78,13 +87,13 @@ class ProspectActions extends Component {
 
         // substract from balance
         const newBalance = Math.max(balance - cost, 0);
-        updateBalance(currentUser, newBalance);
+        updateBalance(account, newBalance);
 
         // all money moves to the contract
         updateBalance('CONTRACT', cost);
 
         // update the state to PAID
-        updateAssetState(domain, 'PAID', currentUser);
+        updateAssetState(domain, 'PAID', account);
     }
 
     render() {
@@ -117,10 +126,10 @@ ProspectActions.contextTypes = {
 };
 
 ProspectActions.propTypes = {
-    currentUser: PropTypes.string.isRequired,
+    account: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
-    balance: PropTypes.string.isRequired,
+    balance: PropTypes.string,
     updateBalance: PropTypes.func.isRequired,
     updateAssetState: PropTypes.func.isRequired
 };
@@ -129,7 +138,7 @@ ProspectActions.propTypes = {
 class BuyerActions extends Component {
 
     release = () => {
-        const { domain, currentUser, updateAssetState, updateBalance, asset } = this.props;
+        const { domain, account, updateAssetState, updateBalance, asset } = this.props;
 
         // pay the seller the net amount, the handling fee stays in the contract
         updateBalance(asset.seller, asset.price);
@@ -138,7 +147,7 @@ class BuyerActions extends Component {
         if (asset.agent) updateBalance(asset.agent, asset.escrowfee);
 
         // update the state to RELEASED
-        updateAssetState(domain, 'RELEASED', currentUser);
+        updateAssetState(domain, 'RELEASED', account);
     }
 
     render() {
@@ -163,7 +172,7 @@ class BuyerActions extends Component {
 };
 
 BuyerActions.propTypes = {
-    currentUser: PropTypes.string.isRequired,
+    account: PropTypes.string.isRequired,
     asset: PropTypes.object.isRequired,
     domain: PropTypes.string.isRequired,
     updateBalance: PropTypes.func.isRequired,
@@ -231,9 +240,14 @@ class SellerActions extends Component {
     }
 
     state = {
-        price: this.web3.utils.fromWei(this.props.asset.price),
+        price: null,
         fiatInput: '',
         activeInput: null // either eth or fiat, field we're typing in
+    }
+
+    componentDidMount() {
+        const price = this.web3.utils.fromWei(this.props.asset.price);
+        this.setState({ price });
     }
 
     updatePrice = (e) => {
@@ -311,7 +325,7 @@ const mapStateToProps = (state, props) => {
     const asset = getAsset(state, domain);
     const role = getRole(state, domain);
     const balance = getMyBalance(state);
-    return { currentUser: state.currentUser, asset, role, balance, fiat: state.fiat };
+    return { account: state.accounts[0], asset, role, balance, fiat: state.fiat };
 };
 
 export default drizzleConnect(Domain, mapStateToProps, { updateAssetPrice, updateAssetState, removeAsset, updateBalance });

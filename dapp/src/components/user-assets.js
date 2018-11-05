@@ -21,14 +21,27 @@ class UserAssets extends Component {
 
         let assets = [];
         _.forEach(userAssets, (dataKey, domain) => {
-            const details = Escrow.details[dataKey].value;
+            let details;
+            try {
+                details = Escrow.details[dataKey].value;
+            } catch(error) {
+                console.warn(`Error getting details for ${domain}: ${error}.`);
+            }
             // depending on agentView add relevant events
-            if(((details.seller === account || details.buyer === account) && !agentView) ||
-               (details.agent === account && agentView)) {
+            if(details) {
+                if(((details.seller === account || details.buyer === account) && !agentView) ||
+                   (details.agent === account && agentView)) {
+                    assets.push(
+                        <li key={domain}>
+                            {domain} <Link to={`/domain/${domain}`}>[ manage ]</Link>
+                            <AssetInfo asset={details} />
+                        </li>
+                    );
+                }
+            } else {
                 assets.push(
                     <li key={domain}>
-                      {domain} <Link to={`/domain/${domain}`}>[ manage ]</Link>
-                      <AssetInfo asset={details} />
+                      {domain} [ Error: could not retrieve details for this domain ]
                     </li>
                 );
             }

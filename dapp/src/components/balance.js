@@ -18,12 +18,12 @@ class Balance extends Component {
         const { web3 } = this.context.drizzle;
 
         if(!balance) return null;
-        const balanceInEther = Number(web3.utils.fromWei(balance.value));
+        const balanceInEther = Number(web3.utils.fromWei(balance));
         return (
             <div className="card p-3 mt-1">
                 <p>Current balance: <AmountPlusFiat amountInEther={balanceInEther} /></p>
                 <CurrencySelector />
-                {balance.value > 0 && <div className="mt-3"><Button onClick={this.handleWithdraw}>withdraw</Button></div>}
+                {balance > 0 && <div className="mt-3"><Button onClick={this.handleWithdraw}>withdraw</Button></div>}
             </div>
         );
     }
@@ -37,7 +37,7 @@ Balance.propTypes = {
     Escrow: PropTypes.object.isRequired,
     fiat: PropTypes.object.isRequired,
     currency: PropTypes.string.isRequired,
-    balance: PropTypes.object
+    balance: PropTypes.string
 };
 
 const mapStateToProps = state => {

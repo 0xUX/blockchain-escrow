@@ -4,3 +4,5 @@ export const FIAT_CALL_FAILURE = 'FIAT_CALL_FAILURE';
 export const SET_CURRENCY = 'SET_CURRENCY';
 export const UPDATE_DOMAIN = 'UPDATE_DOMAIN';
 export const TOGGLE_BALANCE = 'TOGGLE_BALANCE';
+export const ADD_ASSET = 'ADD_ASSET';
+export const REMOVE_ASSET = 'REMOVE_ASSET';

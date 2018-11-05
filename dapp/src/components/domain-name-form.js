@@ -5,7 +5,7 @@ import { Link, Redirect } from 'react-router-dom';
 import { Button, Form, FormGroup, Input, Col } from 'reactstrap';
 import { updateDomain } from '../redux/actions';
 import { getWhoAmI } from '../redux/selectors';
-import { AGENT_FEES, HANDLING_FEE, INPUT_ETHER_DECIMALS } from '../constants';
+import { INPUT_ETHER_DECIMALS } from '../constants';
 import PriceBreakdown from './price-breakdown';
 import { PriceInput } from './price-input';
 import { precisionRound } from '../lib/util';

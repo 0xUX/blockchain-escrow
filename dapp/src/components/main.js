@@ -7,12 +7,11 @@ import { networkDetails } from '../lib/network';
 import { getEventAbi, getEventAbiInputs } from '../lib/eth';
 import { Message } from './ui';
 import { userExists } from '../redux/selectors';
+import { FIAT_CALL_REQUEST, ADD_ASSET, REMOVE_ASSET } from "../redux/action-types";
 import { FROM_BLOCK, ADDRESS } from '../constants';
 import Balance from './balance';
 import ABI from '../../contracts/Escrow.abi.json';
 
-let subscriptionNetwork = networkDetails('rinkeby');
-let web3websocket; // web3 interface for subscription network (Infura)
 
 class Body extends Component {
     constructor(props, context) {
@@ -22,7 +21,8 @@ class Body extends Component {
     }
 
     state = {
-        pastLogsLoading: false // @@@ needed?
+        pastLogsLoading: false, // @@@ needed?
+        domains: {} // contains relevant dn:dataKey attributes
     }
 
     async componentDidMount() {
@@ -42,7 +42,7 @@ class Body extends Component {
     }
 
     getPastLogs = async () => {
-        const web3 = this.web3; // this uses the web3 provider passed in from drizzle context, so MM
+        const web3 = this.web3;
         const { account } = this.props;
         this.setState({ pastLogsLoading: true });
 
@@ -63,10 +63,8 @@ class Body extends Component {
 
         // Get all relevant assets through Involve event
         const involveEventABI = getEventAbi(ABI, 'Involve');
-        const accountTopic = web3.utils.padLeft(account, 64);
-        console.log(involveEventABI);
+        const accountTopic = web3.utils.padLeft(account, 64).toLowerCase();
         const involveTopic0 = web3.eth.abi.encodeEventSignature(involveEventABI);
-        console.log(involveTopic0, accountTopic, ADDRESS);
 
         // try {
         // Get past logs for Involve(*, account)
@@ -75,21 +73,22 @@ class Body extends Component {
             address: ADDRESS,
             topics: [involveTopic0, null, accountTopic]
         });
-        console.log(involvedEvents);
 
         // Get decoded events
         const eventAbiInputs = getEventAbiInputs(ABI, 'Involve');
+        const domains = {};
         for(const evt of involvedEvents) {
             lastRelevantBlock = Math.max(lastRelevantBlock, evt.blockNumber);
-            console.log(evt);
             const decodedEvent = web3.eth.abi.decodeLog(eventAbiInputs, evt.data, evt.topics);
             const dn = decodedEvent.name;
-            console.log(decodedEvent, dn);
             // Get details for asset
-            const dataKey = this.contracts.Escrow.methods.details.cacheCall(dn);
-            console.log(dataKey);
+            try {
+                domains[dn] = this.contracts.Escrow.methods.details.cacheCall(dn);
+            } catch(error) {
+                console.warn(`Error getting details for ${dn}: ${error}.`);
+            }
         }
-
+        this.setState({ domains });
         console.log('lastRelevantBlock', lastRelevantBlock);
 
         // Check if still relevant (still a party? not too old?). If not, remove from store somehow (LATER!)
@@ -128,6 +127,31 @@ class Body extends Component {
         this.setState({ getPastLogs: false });
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        const { domains } = this.state;
+        const { Escrow, account, addAsset, removeAsset, assets } = this.props;
+
+        if(Escrow.details !== prevProps.Escrow.details) {
+            // for each potential asset, wait for values, check if still relevant and add to store
+            for(const dn in domains) {
+                const dataKey = domains[dn];
+                const details = Escrow.details[dataKey];
+                if(details) {
+                    const dv = details.value;
+                    // still relevant?
+                    if(dv && [dv.seller, dv.agent, dv.buyer].indexOf(account) > -1) {
+                        // add to store
+                        addAsset(dataKey, dn);
+                    }
+                }
+            }
+        }
+
+        if(Escrow.events !== prevProps.Escrow.events) {
+            console.log('**************** Events!: ', Escrow.events);
+        }
+    }
+
     showMessages = () => {
         const { isUser, fiat, currency } = this.props;
         if(!isUser) return <Message color="warning" msg="You need to have an Ethereum account to use this dapp." />;
@@ -136,10 +160,16 @@ class Body extends Component {
     }
 
     render() {
-        const { isUser, currency, showBalance } = this.props;
+
+        console.log('Main RENDER');
+
+        const { isUser, showBalance, Escrow } = this.props;
+
+        const pendingSpinner = Escrow.synced ? '' : <strong>NOTSYNCED_SPINNER</strong>; // @@@
 
         return (
             <Container className="pb-5">
+                {pendingSpinner}
                 {showBalance && <Balance />}
                 {this.showMessages()}
                 {isUser && this.props.children}
@@ -159,7 +189,10 @@ Body.propTypes = {
     showBalance: PropTypes.bool.isRequired,
     onRequestFiat: PropTypes.func.isRequired,
     account: PropTypes.string.isRequired,
-    Escrow: PropTypes.object.isRequired
+    Escrow: PropTypes.object.isRequired,
+    assets: PropTypes.object.isRequired,
+    addAsset: PropTypes.func.isRequired,
+    removeAsset: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => {
@@ -169,13 +202,16 @@ const mapStateToProps = state => {
              fiat: state.fiat,
              showBalance: state.showBalance,
              account: state.accounts[0],
-             Escrow: state.contracts.Escrow
+             Escrow: state.contracts.Escrow,
+             assets: state.assets
            };
 };
 
 const mapDispatchToProps = dispatch => {
     return {
-        onRequestFiat: currency => dispatch({ type: "FIAT_CALL_REQUEST", payload: {currency} })
+        onRequestFiat: currency => dispatch({ type: FIAT_CALL_REQUEST, payload: {currency} }),
+        addAsset: (dataKey, domain) => dispatch({ type: ADD_ASSET, payload: {dataKey, domain} }),
+        removeAsset: dataKey => dispatch({ type: REMOVE_ASSET, payload: {dataKey} })
     };
 };
 

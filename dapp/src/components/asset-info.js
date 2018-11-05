@@ -1,11 +1,12 @@
 import React from "react";
 import PropTypes from 'prop-types';
+import { AmountPlusFiat } from './ui';
 import { ASSET_STATES } from "../constants";
 
 
 export const AssetInfo = (props, context) => {
     const { asset } = props;
-    const { web3 } = context;
+    const { web3 } = context.drizzle;
     const agent = Number(asset.agent) ? asset.agent : '-';
 
     return (

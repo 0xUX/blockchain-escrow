@@ -2,21 +2,59 @@ import _ from 'lodash-es';
 
 
 export const getUserAssets = store => {
-    const user = store.accounts[0];
+    const account = store.accounts[0];
     const details = store.contracts.Escrow.details;
     const userAssets = {};
     _.forOwn(details, function(value, key) {
-        const dn = value.args[0];
-        userAssets[dn] = key;
+        // check if account is seller/agent/buyer
+        const detail = value.value;
+        if(detail && [detail.seller, detail.agent, detail.buyer].indexOf(account) > -1) {
+            const dn = value.args[0];
+            userAssets[dn] = key;
+        }
     });
-
     return userAssets;
+};
+
+
+export const getAsset = (store, domain) => {
+    const account = store.accounts[0];
+    const details = store.contracts.Escrow.details;
+
+    console.log(store.assets);
+    if(!store.assets[domain]) return 404;
+
+    let asset = null;
+
+    _.forOwn(details, function(value, key) {
+        const dn = value.args[0];
+        if(dn === domain) {
+            const detail = value.value;
+            // check if account is seller/agent/buyer
+            if(detail && [detail.seller, detail.agent, detail.buyer].indexOf(account) > -1) {
+                asset = detail;
+            }
+        }
+    });
+    return asset;
+};
+
+
+export const getRole = (store, domain) => {
+    const account = store.accounts[0];
+    const asset = getAsset(store, domain);
+    if(_.isEmpty(asset, true)) return null; // not for sale
+    // if(userIsOwner(store)) return 'owner';    // @@@
+    if(asset.seller === account) return 'seller';
+    if(asset.buyer === account) return 'buyer';
+    if(asset.agent === account) return 'agent';
+    return 'prospect';
 };
 
 
 export const getMyBalance = store => {
     const myBalance = store.contracts.Escrow.myBalance;
-    if(myBalance && myBalance['0x0']) return myBalance['0x0']; // @@@ return .value
+    if(myBalance && myBalance['0x0']) return myBalance['0x0'].value;
     return null;
 };
 
@@ -62,13 +100,4 @@ export const userExists = store => {
 //         blocknumber: null,
 //         state: 'NOTFORSALE'
 //     };
-// };
-//
-// export const getRole = (store, dn) => {
-//     if(!store.assets[dn]) return null; // not for sale
-//     if(userIsOwner(store)) return 'owner';
-//     if(store.assets[dn].seller === store.currentUser) return 'seller';
-//     if(store.assets[dn].buyer === store.currentUser) return 'buyer';
-//     if(store.assets[dn].agent === store.currentUser) return 'agent'; // for this dn
-//     return 'prospect';
 // };

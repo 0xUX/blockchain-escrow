@@ -36,7 +36,7 @@ PriceBreakdown.propTypes = {
     price: PropTypes.string.isRequired,
     agentAccount: PropTypes.string,
     handlingPermillage: PropTypes.string,
-    agentPermillage: PropTypes.object
+    agentPermillage: PropTypes.string
 };
 
 const mapStateToProps = state => {
