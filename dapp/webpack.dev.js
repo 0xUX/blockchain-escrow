@@ -26,6 +26,9 @@ module.exports = merge(common, {
             disableDotRule: true
         }
     },
+    output: {
+        publicPath: '/'
+    },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new WebpackBuildNotifierPlugin({
