@@ -26,9 +26,20 @@ ganache-cli -b 3
 
 Now we have an RPC interface on [127.0.0.1:8545](http://127.0.0.1:8545/).
 
-On MetaMask import a couple of accounts (by private key). Copy the private keys from the ganache-cli output. Make sure one account is named `owner` (the one you deployed with) and one `agent`.
+On MetaMask import a couple of accounts (by private key). Copy the private keys from the ganache-cli output. Make sure one account is named `owner` (the one you deploy with) and one `agent`.
 
-Copy the escrow.sol source to Remix and deploy it on "Injected web3". Copy the address of the contract and set it to `ADDRESS` in `constants.js.`
+To keep these accounts valid the next time, reuse this HD wallet:
+
+```
+HD Wallet
+==================
+Mnemonic:      item weekend dizzy firm brave trigger merry piece patch dash large liar
+Base HD Path:  m/44'/60'/0'/0/{account_index}
+```
+
+Copy the escrow.sol source to Remix and deploy it on "Injected web3". Make sure you use the `owner` account.
+
+Copy the address of the contract and set it to `ADDRESS` in `constants.js.`
 Also set the `agent` address to `AGENTS` in that file, and enroll the agent in the contract (via Remix).
 
 Now make sure the MetaMask network is set to `Private Network`.
