@@ -131,6 +131,11 @@ class Body extends Component {
         const { domains } = this.state;
         const { Escrow, account, addAsset, removeAsset, assets } = this.props;
 
+        if(account !== prevProps.account) {
+            // MetaMask account switch, refresh web page
+            window.location.reload();
+        }
+
         if(Escrow.details !== prevProps.Escrow.details) {
             // for each potential asset, wait for values, check if still relevant and add to store
             for(const dn in domains) {
