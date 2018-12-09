@@ -37,6 +37,12 @@ Mnemonic:      item weekend dizzy firm brave trigger merry piece patch dash larg
 Base HD Path:  m/44'/60'/0'/0/{account_index}
 ```
 
+Like so:
+
+```
+ganache-cli -b 3 --mnemonic="item weekend dizzy firm brave trigger merry piece patch dash large liar"
+```
+
 Copy the escrow.sol source to Remix and deploy it on "Injected web3". Make sure you use the `owner` account.
 
 Copy the address of the contract and set it to `ADDRESS` in `constants.js.`

@@ -11,7 +11,7 @@ export const DISPLAY_ETHER_DECIMALS = 3;
 export const INPUT_ETHER_DECIMALS = 18;
 
 // TODO @@@ move below this line to config file
-export const NETWORK_ID = 1541839708443;
+export const NETWORK_ID = 1544346804435;
 export const FROM_BLOCK = 0;
 export const ADDRESS = '0x58da9c2da84e2b4cc7bae443d6ad95579630b592';
 export const AGENTS = ['0x27d1fCCD1142783c2c4a3de82B9e7c8Cf50E5874']

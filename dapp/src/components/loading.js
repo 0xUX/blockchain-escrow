@@ -44,6 +44,8 @@ class Loading extends Component {
 
         const { initialized, account, networkId, contracts, mini } = this.props;
 
+        //console.log(networkId);
+
         // All good, load the children if contract exists
         if(initialized && account && networkId == NETWORK_ID) {
             return <ContractCheck>{this.props.children}</ContractCheck>;

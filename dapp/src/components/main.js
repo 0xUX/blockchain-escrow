@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
+import _ from 'lodash-es';
 import { drizzleConnect } from 'drizzle-react';
 import { Container } from 'reactstrap';
 import { withRouter } from 'react-router';
@@ -21,11 +22,14 @@ class Body extends Component {
     }
 
     state = {
-        pastLogsLoading: false, // @@@ needed?
+        pastLogsLoading: true, // @@@ needed?
         domains: {} // contains relevant dn:dataKey attributes
     }
 
     async componentDidMount() {
+
+        console.log('START componentDidMount Body!!!!!!!!!!!', this.props, this.context);
+
         const { onRequestFiat, account } = this.props;
         const { Escrow } = this.context.drizzle.contracts;
 
@@ -39,12 +43,13 @@ class Body extends Component {
         Escrow.methods.myBalance.cacheCall();
         Escrow.methods.handling_permillage.cacheCall();
         Escrow.methods.whois.cacheCall(account);
+
+        console.log('END componentDidMount Body!!!!!!!!!!!', this.props, this.context);
     }
 
     getPastLogs = async () => {
         const web3 = this.web3;
         const { account } = this.props;
-        this.setState({ pastLogsLoading: true });
 
         // Get the topic0 for the Offered event
         // const accountTopic = web3.utils.padLeft(account, 64);
@@ -88,7 +93,11 @@ class Body extends Component {
                 console.warn(`Error getting details for ${dn}: ${error}.`);
             }
         }
-        this.setState({ domains });
+        if (_.isEmpty(domains)) {
+            this.setState({ pastLogsLoading: false });
+        } else {
+            this.setState({ domains });
+        }
         console.log('lastRelevantBlock', lastRelevantBlock);
 
         // Check if still relevant (still a party? not too old?). If not, remove from store somehow (LATER!)
@@ -123,8 +132,6 @@ class Body extends Component {
         // } catch(error) {
         //     console.log('pastLogs error', error);
         // }
-
-        this.setState({ getPastLogs: false });
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -138,22 +145,70 @@ class Body extends Component {
 
         if(Escrow.details !== prevProps.Escrow.details) {
             // for each potential asset, wait for values, check if still relevant and add to store
+            console.log('~~~~~~~~~~~~~~~~~', domains);
             for(const dn in domains) {
+                if(!dn) console.error('EMPTY domains property', domains);
                 const dataKey = domains[dn];
                 const details = Escrow.details[dataKey];
                 if(details) {
                     const dv = details.value;
                     // still relevant?
+                    if(dn === 'new.nu') console.warn(dv);
                     if(dv && [dv.seller, dv.agent, dv.buyer].indexOf(account) > -1) {
                         // add to store
                         addAsset(dataKey, dn);
+                    } else {
+                        console.warn('removing dn:', dn);
+                        removeAsset(dataKey);
+                        delete domains[dataKey];
+                        this.setState({ domains });
                     }
                 }
             }
+            this.setState({ pastLogsLoading: false });
         }
 
         if(Escrow.events !== prevProps.Escrow.events) {
             console.log('**************** Events!: ', Escrow.events);
+            this.setState({ pastLogsLoading: true });
+            for (const event of Escrow.events) {
+                console.warn(event);
+                if(event.event === 'Involve' && event.returnValues) { // relevant for us
+                    const dn = event.returnValues.name;
+                    // Get latest details for asset
+                    try {
+                        domains[dn] = this.contracts.Escrow.methods.details.cacheCall(dn);
+                        this.setState({ domains });
+                    } catch(error) {
+                        console.warn(`Error getting details for ${dn}: ${error}.`);
+                    }
+                    console.warn(event.logIndex, event.returnValues);
+                } else if(event.returnValues) {
+                    // Check if one of domains is relevant for current user
+                    const dn = event.returnValues.name;
+                    const domainKey = assets[dn];
+                    if(domainKey) { // relevant
+                        const details = Escrow.details[domainKey];
+                        if(details) {
+
+                            console.log('*** are details updated now? ***', details);
+
+                            const dv = details.value;
+                            // still relevant?
+                            if(dn === 'new.nu') console.warn(dv);
+                            if(dv && [dv.seller, dv.agent, dv.buyer].indexOf(account) > -1) {
+                                // nada
+                            } else {
+                                console.warn('removing dn:', dn);
+                                removeAsset(domainKey);
+                                delete domains[domainKey];
+                                this.setState({ domains });
+                            }
+                        }
+                    }
+                }
+            }
+            this.setState({ pastLogsLoading: false });
         }
     }
 
@@ -166,18 +221,18 @@ class Body extends Component {
 
     render() {
 
-        console.log('Main RENDER');
+        console.warn('Main RENDER', this.state.pastLogsLoading); // @@@
 
         const { isUser, showBalance, Escrow } = this.props;
 
-        const pendingSpinner = Escrow.synced ? '' : <strong>NOTSYNCED_SPINNER</strong>; // @@@
+        const pendingSpinner = this.state.pastLogsLoading ? <strong>NOTSYNCED_SPINNER</strong> : '';
 
         return (
             <Container className="pb-5">
                 {pendingSpinner}
                 {showBalance && <Balance />}
                 {this.showMessages()}
-                {isUser && this.props.children}
+                {isUser && !this.state.pastLogsLoading && this.props.children}
             </Container>
         );
     }

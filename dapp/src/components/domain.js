@@ -22,6 +22,9 @@ const NotForSale = props => (
 
 class Domain extends Component {
     render() {
+
+        console.log('RENDER Domain'); // @@@
+
         const { match, account, asset, role, balance, updateAssetPrice, updateAssetState, removeAsset, updateBalance, fiat } = this.props;
         const { web3 } = this.context.drizzle;
         const { domain } = match.params;

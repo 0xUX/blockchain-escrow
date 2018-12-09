@@ -15,7 +15,7 @@ class UserAssets extends Component {
 
     render() {
 
-        console.log('UserAssets RENDER');
+        //console.log('UserAssets RENDER'); // @@@
 
         const { agentView, userAssets, Escrow, account } = this.props;
 
