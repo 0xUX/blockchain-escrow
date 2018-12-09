@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from 'prop-types';
+import _ from 'lodash-es';
 import { Link } from 'react-router-dom';
 import { drizzleConnect } from 'drizzle-react';
 import { Button, Form, FormGroup, Input } from 'reactstrap';
@@ -11,7 +12,7 @@ import PriceBreakdown from './price-breakdown';
 import { PriceInput } from './price-input';
 import { CurrencySelector } from './currency-selector';
 import { getSalesPriceInEther, getSalesPriceInWei, formatAmount, getPriceBreakdownInWei, precisionRound } from '../lib/util';
-import { AmountPlusFiat, DelayedSpinner } from './ui';
+import { AmountPlusFiat } from './ui';
 
 
 const NotForSale = props => (
@@ -29,9 +30,8 @@ class Domain extends Component {
         const { web3 } = this.context.drizzle;
         const { domain } = match.params;
 
-        console.log(asset);
-        if(asset === 404) return <div><h1>Not for sale</h1><NotForSale domain={domain} /></div>;
-        if(!asset) return <DelayedSpinner />;
+        if(_.isEmpty(asset)) return <div><h1>Not for sale</h1><NotForSale domain={domain} /></div>;
+
 
         console.log(asset);
 

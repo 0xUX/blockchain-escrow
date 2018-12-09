@@ -22,7 +22,7 @@ export const getAsset = (store, domain) => {
     const details = store.contracts.Escrow.details;
 
     console.log(store.assets);
-    if(!store.assets[domain]) return 404;
+    if(!store.assets[domain]) return {};
 
     let asset = null;
 
