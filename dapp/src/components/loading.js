@@ -21,9 +21,6 @@ class ContractCheck extends Component {
     }
 
     render() {
-
-        console.log('ContractCheck RENDER'); // @@@
-
         const { validContract } = this.state;
         if(validContract === true) return Children.only(this.props.children);
         if(validContract === false) throw "Contract not found at address " + ADDRESS;
@@ -37,11 +34,17 @@ ContractCheck.contextTypes = {
 };
 
 class Loading extends Component {
+    shouldComponentUpdate(nextProps) {
+        const { initialized, account, networkId } = this.props;
+
+        if(nextProps.initialized == initialized && nextProps.account == account && nextProps.networkId == networkId
+           && nextProps.children == this.props.children) {
+            return false;
+        }
+        return true;
+    }
 
     render() {
-
-        console.log('Loading RENDER'); // @@@
-
         const { initialized, account, networkId, contracts, mini } = this.props;
 
         //console.log(networkId);

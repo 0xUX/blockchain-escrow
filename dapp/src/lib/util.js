@@ -3,6 +3,10 @@ import { DISPLAY_ETHER_DECIMALS } from '../constants';
 
 export const getPriceBreakdownInWei = (web3, priceInEther, agentAccount, handlingPermillage, agentPermillage) => {
     if(!priceInEther) priceInEther = '0';
+
+    console.log(priceInEther, agentAccount, handlingPermillage, agentPermillage);
+    if(!agentPermillage) agentPermillage = '0'; // @@@TODO add to asset state in contract? Otherwise rewrite to calculate based on net/price
+
     const netPrice = web3.utils.toWei(priceInEther, 'ether');
     const netPriceBN = web3.utils.toBN(netPrice); // needed for math with big wei numbers
     const escrowfee = agentAccount ? netPriceBN.divn(1000).muln(Number(agentPermillage)) : web3.utils.toBN('0');
@@ -20,15 +24,15 @@ export const getPriceBreakdownInEther = (priceInEther, agentAccount, handlingPer
     return { priceInEther, escrowfee, handlingfee, salesPrice };
 };
 
-export const getSalesPriceInWei = (web3, asset) => {
+export const getSalesPriceInWei = (web3, asset, handlingPermillage) => {
     const priceInEther = web3.utils.fromWei(asset.price);
-    const { salesPrice } = getPriceBreakdownInWei(priceInEther, asset.agent);
+    const { salesPrice } = getPriceBreakdownInWei(web3, priceInEther, asset.agent, handlingPermillage);
     return salesPrice;
 };
 
-export const getSalesPriceInEther = (web3, asset) => {
+export const getSalesPriceInEther = (web3, asset, handlingPermillage) => {
     const priceInEther = Number(web3.utils.fromWei(asset.price));
-    const { salesPrice } = getPriceBreakdownInEther(priceInEther, asset.agent);
+    const { salesPrice } = getPriceBreakdownInEther(priceInEther, asset.agent, handlingPermillage);
     return salesPrice;
 };
 

@@ -14,7 +14,7 @@ import Balance from './balance';
 import ABI from '../../contracts/Escrow.abi.json';
 
 
-class Body extends Component {
+class Main extends Component {
     constructor(props, context) {
         super(props);
         this.web3 = context.drizzle.web3;
@@ -22,16 +22,23 @@ class Body extends Component {
     }
 
     state = {
-        pastLogsLoading: true, // @@@ needed?
-        domains: {} // contains relevant dn:dataKey attributes
+        pastLogsLoading: true,
+        domains: {}, // contains relevant dn:dataKey attributes,
+        dnFromPath: null // dn from path when on /domain page
     }
 
     async componentDidMount() {
 
-        console.log('START componentDidMount Body!!!!!!!!!!!', this.props, this.context);
+        console.log('START componentDidMount Main!!!!!!!!!!!', this.props, this.context);
 
         const { onRequestFiat, account } = this.props;
         const { Escrow } = this.context.drizzle.contracts;
+
+        // get domain from path
+        const m = location.pathname.match(/^\/domain\/(.+)\s*$/);
+        if(m && m[1]) {
+            this.setState({ dnFromPath: m[1] });
+        }
 
         // get fiat conversion rate
         onRequestFiat('USD');
@@ -44,7 +51,7 @@ class Body extends Component {
         Escrow.methods.handling_permillage.cacheCall();
         Escrow.methods.whois.cacheCall(account);
 
-        console.log('END componentDidMount Body!!!!!!!!!!!', this.props, this.context);
+        console.log('END componentDidMount Main!!!!!!!!!!!', this.props, this.context);
     }
 
     getPastLogs = async () => {
@@ -135,16 +142,31 @@ class Body extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const { domains } = this.state;
-        const { Escrow, account, addAsset, removeAsset, assets } = this.props;
+        const { domains, dnFromPath } = this.state;
+        const { Escrow, account, addAsset, removeAsset, assets, match } = this.props;
 
         if(account !== prevProps.account) {
             // MetaMask account switch, refresh web page
             window.location.reload();
         }
 
+        // Check for non-Involved domain (potential buyer)
+        console.log('=========== MAIN componentDidUpdate ================');
+        if(dnFromPath && !domains[dnFromPath]) {
+            // we are at the domain page for domain m[1], but it is not in the domains dict
+            console.log('domain name not in domains: ', dnFromPath);
+            // Get the details for asset
+            try {
+                domains[dnFromPath] = this.contracts.Escrow.methods.details.cacheCall(dnFromPath);
+                this.setState({ domains });
+            } catch(error) {
+                console.warn(`Error getting details for ${dnFromPath}: ${error}.`);
+            }
+        }
+
         if(Escrow.details !== prevProps.Escrow.details) {
             // for each potential asset, wait for values, check if still relevant and add to store
+            this.setState({ pastLogsLoading: true });
             console.log('~~~~~~~~~~~~~~~~~', domains);
             for(const dn in domains) {
                 if(!dn) console.error('EMPTY domains property', domains);
@@ -153,8 +175,8 @@ class Body extends Component {
                 if(details) {
                     const dv = details.value;
                     // still relevant?
-                    if(dn === 'new.nu') console.warn(dv);
-                    if(dv && [dv.seller, dv.agent, dv.buyer].indexOf(account) > -1) {
+                    console.log(dn, dnFromPath, dv);
+                    if(dv && ([dv.seller, dv.agent, dv.buyer].indexOf(account) > -1) || (dn == dnFromPath)) {
                         // add to store
                         addAsset(dataKey, dn);
                     } else {
@@ -225,7 +247,7 @@ class Body extends Component {
 
         const { isUser, showBalance, Escrow } = this.props;
 
-        const pendingSpinner = this.state.pastLogsLoading ? <strong>NOTSYNCED_SPINNER</strong> : '';
+        const pendingSpinner = this.state.pastLogsLoading ? <strong>................PASTLOGS_LOADING................</strong> : '';
 
         return (
             <Container className="pb-5">
@@ -238,11 +260,11 @@ class Body extends Component {
     }
 }
 
-Body.contextTypes = {
+Main.contextTypes = {
     drizzle: PropTypes.object
 };
 
-Body.propTypes = {
+Main.propTypes = {
     isUser: PropTypes.bool.isRequired,
     currency: PropTypes.string.isRequired,
     fiat: PropTypes.object.isRequired,
@@ -275,6 +297,6 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
-const BodyContainer = drizzleConnect(Body, mapStateToProps, mapDispatchToProps);
+const MainContainer = drizzleConnect(Main, mapStateToProps, mapDispatchToProps);
 
-export default withRouter(BodyContainer);
+export default withRouter(MainContainer);

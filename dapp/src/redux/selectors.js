@@ -21,7 +21,6 @@ export const getAsset = (store, domain) => {
     const account = store.accounts[0];
     const details = store.contracts.Escrow.details;
 
-    console.log(store.assets);
     if(!store.assets[domain]) return {};
 
     let asset = null;
@@ -31,7 +30,7 @@ export const getAsset = (store, domain) => {
         if(dn === domain) {
             const detail = value.value;
             // check if account is seller/agent/buyer
-            if(detail && [detail.seller, detail.agent, detail.buyer].indexOf(account) > -1) {
+            if(detail) {
                 asset = detail;
             }
         }
