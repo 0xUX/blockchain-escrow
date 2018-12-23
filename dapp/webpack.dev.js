@@ -24,7 +24,8 @@ module.exports = merge(common, {
         hotOnly: true,
         historyApiFallback: {
             disableDotRule: true
-        }
+        },
+        disableHostCheck: true
     },
     output: {
         publicPath: '/'
